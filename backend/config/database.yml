@@ -1,0 +1,23 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+development:
+  <<: *default
+  database: nova_crm_development
+  username: postgres
+  password: 1234
+  host: localhost
+
+test:
+  <<: *default
+  database: nova_crm_test
+  username: postgres
+  host: localhost
+  password: 1234
+
+production:
+  <<: *default
+  database: nova_crm_production
