@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
 import AppLayout from "./layouts/AppLayout";
 import Clients from "./pages/Clients";
+import Invoices from "./pages/Invoices";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="clients" element={<Clients />} />
+        <Route path="invoices" element={<Invoices />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
