@@ -14,6 +14,19 @@ const statusBadges = {
 
 const statusOptions = ["draft", "sent", "paid", "overdue", "cancelled"];
 const currencyOptions = ["USD", "EUR", "SAR"];
+const methodOptions = [
+  { value: "cash", label: "Cash" },
+  { value: "card", label: "Card" },
+  { value: "bank_transfer", label: "Bank transfer" },
+  { value: "other", label: "Other" },
+];
+
+const paymentMethodLabels = {
+  cash: "Cash",
+  card: "Card",
+  bank_transfer: "Bank transfer",
+  other: "Other",
+};
 
 const emptyItem = { description: "", quantity: 1, unit_price: 0, tax_rate: 0 };
 const emptyPayment = { amount: "", paid_at: "", method: "", note: "" };
@@ -45,6 +58,13 @@ function formatMoney(amount, currency = "USD") {
     return amount;
   }
 }
+
+const formatDateTime = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+};
 
 export default function Invoices() {
   const { token } = useAuth();
@@ -884,13 +904,20 @@ export default function Invoices() {
                         <label className="block text-xs font-medium text-slate-600 mb-1">
                           Method
                         </label>
-                        <input
+                        <select
                           value={payment.method}
                           onChange={(e) =>
                             handlePaymentChange(index, "method", e.target.value)
                           }
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
-                        />
+                        >
+                          <option value="">Select method</option>
+                          {methodOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div className="md:col-span-4">
                         <label className="block text-xs font-medium text-slate-600 mb-1">
@@ -1066,7 +1093,8 @@ export default function Invoices() {
                         Payments
                       </h3>
                       <p className="text-xs text-slate-600">
-                        {(viewInvoice.payments || []).length} payment(s)recorded
+                        {(viewInvoice.payments || []).length} payment(s)
+                        recorded
                       </p>
                     </div>
                     <button
@@ -1091,16 +1119,16 @@ export default function Invoices() {
                               )}
                             </p>
                             <p className="text-xs text-slate-500">
-                              {payment.paid_at}
+                              {formatDateTime(payment.paid_at)}
                             </p>
                             <p className="text-xs text-slate-600">
-                              Method: {payment.method}
+                              Method:{" "}
+                              {paymentMethodLabels[payment.method] ||
+                                payment.method}
                             </p>
-                            {payment.note && (
-                              <p className="text-xs text-slate-500">
-                                {payment.note}
-                              </p>
-                            )}
+                            <p className="text-xs text-slate-500">
+                              {payment.note || "No note"}
+                            </p>
                           </div>
                           <button
                             onClick={() =>
