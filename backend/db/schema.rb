@@ -10,16 +10,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_12_01_130039) do
+ActiveRecord::Schema[7.1].define(version: 2025_12_01_183637) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
   create_table "accounts", force: :cascade do |t|
     t.string "name"
     t.string "logo_url"
-    t.string "default_currency"
+    t.string "default_currency", default: "USD", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "company_name"
+    t.text "company_address"
+    t.string "company_phone"
+    t.string "company_website"
+    t.string "company_tax_id"
+    t.string "company_logo_url"
+    t.string "invoice_prefix", default: "INV", null: false
+    t.decimal "default_tax_rate", precision: 5, scale: 2, default: "0.0", null: false
+    t.integer "default_payment_terms_days", default: 7, null: false
   end
 
   create_table "clients", force: :cascade do |t|
@@ -86,6 +95,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_01_130039) do
     t.string "password_digest"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "job_title"
+    t.string "phone"
+    t.string "avatar_url"
+    t.string "locale"
+    t.string "timezone"
     t.index ["account_id"], name: "index_users_on_account_id"
   end
 

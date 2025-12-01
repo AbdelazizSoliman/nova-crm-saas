@@ -6,6 +6,7 @@ import AppLayout from "./layouts/AppLayout";
 import Clients from "./pages/Clients";
 import Invoices from "./pages/Invoices";
 import Settings from "./pages/Settings";
+import Payments from "./pages/Payments";
 export default function App() {
   return (
     <Routes>
@@ -24,6 +25,8 @@ export default function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="clients" element={<Clients />} />
         <Route path="invoices" element={<Invoices />} />
+        <Route path="invoices/:invoiceId" element={<Invoices />} />
+        <Route path="payments" element={<Payments />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 

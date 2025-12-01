@@ -6,12 +6,14 @@ import {
   DocumentTextIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
+  BanknotesIcon,
 } from "@heroicons/react/24/outline";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: HomeIcon },
   { to: "/clients", label: "Clients", icon: UserGroupIcon },
   { to: "/invoices", label: "Invoices", icon: DocumentTextIcon },
+  { to: "/payments", label: "Payments", icon: BanknotesIcon },
   { to: "/settings", label: "Settings", icon: Cog6ToothIcon },
 ];
 
