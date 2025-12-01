@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
 import AppLayout from "./layouts/AppLayout";
+import Clients from "./pages/Clients";
 
 export default function App() {
   return (
@@ -20,7 +21,7 @@ export default function App() {
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
-        {/* هنضيف /clients و /invoices لاحقًا */}
+        <Route path="clients" element={<Clients />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
