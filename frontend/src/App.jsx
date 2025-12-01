@@ -1,9 +1,29 @@
+import { Routes, Route, Navigate } from "react-router-dom";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import ProtectedRoute from "./ProtectedRoute";
+import AppLayout from "./layouts/AppLayout";
+
 export default function App() {
   return (
-    <div className="h-screen flex items-center justify-center bg-slate-100">
-      <h1 className="text-3xl font-bold text-blue-600">
-        Tailwind is working ✔
-      </h1>
-    </div>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+
+      {/* كل الصفحات المحمية داخل AppLayout */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        {/* هنضيف /clients و /invoices لاحقًا */}
+      </Route>
+
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
   );
 }
