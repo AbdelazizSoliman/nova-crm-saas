@@ -116,7 +116,6 @@ class InvoicePdfGenerator
       data,
       header: true,
       width: pdf.bounds.width,
-      column_widths: [pdf.bounds.width * 0.4, 60, 110, 70, 110],
       row_colors: %w[ffffff f7f9fb],
       cell_style: { borders: [:top, :bottom], border_width: 0.5, padding: [6, 8, 6, 8] }
     ) do |t|
@@ -124,6 +123,7 @@ class InvoicePdfGenerator
       t.row(0).background_color = "eef2f7"
       t.columns(1..4).align = :right
     end
+
   end
 
   def build_totals(pdf)
