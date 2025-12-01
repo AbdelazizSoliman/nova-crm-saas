@@ -7,21 +7,24 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+   namespace :api do
+    post "auth/register", to: "auth#register"
+    post "auth/login",    to: "auth#login"
 
-     namespace :api do
-      post "auth/register", to: "auth#register"
-      post "auth/login",    to: "auth#login"
+    get "dashboard/summary", to: "dashboard#summary"
 
-      get "dashboard/summary", to: "dashboard#summary"
+    get "settings", to: "settings#show"
+    put "settings/profile", to: "settings#update_profile"
+    put "settings/account", to: "settings#update_account"
 
-      resources :clients
+    resources :clients
 
-      resources :invoices do
-        member do
+    resources :invoices do
+      member do
         post :duplicate
       end
       
-      resources :payments, only: [:index, :create]
-     end
+      resources :payments, only: %i[index create]
+    end
   end
 end
