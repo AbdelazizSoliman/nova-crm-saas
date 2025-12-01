@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { apiRequest } from "../api/client";
+import { API_BASE_URL, apiRequest } from "../api/client";
 import AddPaymentModal from "../components/AddPaymentModal";
 
 const statusBadges = {
@@ -98,6 +98,8 @@ export default function Invoices() {
   const [viewInvoice, setViewInvoice] = useState(null);
   const [viewError, setViewError] = useState("");
   const [viewLoading, setViewLoading] = useState(false);
+
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
@@ -360,6 +362,43 @@ export default function Invoices() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoiceId, token]);
+
+  const handleDownloadPdf = async (invoice) => {
+    if (!invoice?.id) return;
+
+    try {
+      setViewError("");
+      setPdfLoading(true);
+
+      const response = await fetch(
+        `${API_BASE_URL}/invoices/${invoice.id}/pdf`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to download PDF");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.download = `${invoice.number || `invoice-${invoice.id}`}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setViewError(err.message || "Failed to download PDF");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const handleDuplicate = async (invoiceId) => {
     try {
@@ -979,6 +1018,13 @@ export default function Invoices() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDownloadPdf(viewInvoice)}
+                  disabled={pdfLoading || viewLoading}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                >
+                  {pdfLoading ? "Preparing..." : "Download PDF"}
+                </button>
                 <button
                   onClick={() => handleDuplicate(viewInvoice.id)}
                   className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"

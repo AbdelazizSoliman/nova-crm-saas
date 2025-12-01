@@ -1,9 +1,9 @@
 module Api
   class InvoicesController < BaseController
-    before_action :set_invoice, only: %i[show update destroy]
+    before_action :set_invoice, only: %i[show update destroy pdf]
 
     # GET /api/invoices
-       def index
+    def index
       scope = current_account.invoices
                              .includes(:client)
                              .order(created_at: :desc)
@@ -57,6 +57,16 @@ module Api
           }
         }
       )
+    end
+
+    # GET /api/invoices/:id/pdf
+    def pdf
+      pdf_data = InvoicePdfGenerator.new(@invoice).render
+
+      send_data pdf_data,
+                filename: "#{@invoice.number}.pdf",
+                type: "application/pdf",
+                disposition: "inline"
     end
 
     # POST /api/invoices
@@ -120,7 +130,10 @@ module Api
     private
 
     def set_invoice
-      @invoice = current_account.invoices.find(params[:id])
+      @invoice = current_account
+                  .invoices
+                  .includes(:client, :invoice_items, :payments)
+                  .find(params[:id])
     end
 
     # بيانات الفاتورة الأساسية (بدون items/payments)

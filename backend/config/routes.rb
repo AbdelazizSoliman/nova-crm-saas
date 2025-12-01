@@ -7,7 +7,7 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
-   namespace :api do
+  namespace :api do
     post "auth/register", to: "auth#register"
     post "auth/login",    to: "auth#login"
 
@@ -24,6 +24,7 @@ Rails.application.routes.draw do
     resources :invoices do
       member do
         post :duplicate
+        get :pdf
       end
 
       resources :payments, only: %i[index create]
