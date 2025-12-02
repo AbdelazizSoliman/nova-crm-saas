@@ -17,6 +17,12 @@ Rails.application.routes.draw do
     put "settings/profile", to: "settings#update_profile"
     put "settings/account", to: "settings#update_account"
 
+    resources :products do
+      collection do
+        get :autocomplete
+      end
+    end
+
     resources :clients
 
     resources :payments, only: %i[index destroy]
