@@ -2,6 +2,7 @@ import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   HomeIcon,
+  CubeIcon,
   UserGroupIcon,
   DocumentTextIcon,
   Cog6ToothIcon,
@@ -12,6 +13,7 @@ import {
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: HomeIcon },
   { to: "/clients", label: "Clients", icon: UserGroupIcon },
+  { to: "/products", label: "Products", icon: CubeIcon },
   { to: "/invoices", label: "Invoices", icon: DocumentTextIcon },
   { to: "/payments", label: "Payments", icon: BanknotesIcon },
   { to: "/settings", label: "Settings", icon: Cog6ToothIcon },

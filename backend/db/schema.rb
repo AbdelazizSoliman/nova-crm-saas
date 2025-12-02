@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_12_01_183637) do
+ActiveRecord::Schema[7.1].define(version: 2025_12_01_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -103,10 +103,28 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_01_183637) do
     t.index ["account_id"], name: "index_users_on_account_id"
   end
 
+  create_table "products", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.string "sku"
+    t.text "description"
+    t.decimal "unit_price", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "default_tax_rate", precision: 5, scale: 2
+    t.string "currency"
+    t.boolean "is_active", default: true, null: false
+    t.string "product_type"
+    t.string "category"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "sku"], name: "index_products_on_account_id_and_sku", unique: true, where: "(sku IS NOT NULL)"
+    t.index ["name"], name: "index_products_on_name"
+  end
+
   add_foreign_key "clients", "accounts"
   add_foreign_key "invoice_items", "invoices"
   add_foreign_key "invoices", "accounts"
   add_foreign_key "invoices", "clients"
   add_foreign_key "payments", "invoices"
   add_foreign_key "users", "accounts"
+  add_foreign_key "products", "accounts"
 end

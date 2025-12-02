@@ -7,6 +7,7 @@ import Clients from "./pages/Clients";
 import Invoices from "./pages/Invoices";
 import Settings from "./pages/Settings";
 import Payments from "./pages/Payments";
+import Products from "./pages/Products";
 export default function App() {
   return (
     <Routes>
@@ -24,6 +25,7 @@ export default function App() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="clients" element={<Clients />} />
+        <Route path="products" element={<Products />} />
         <Route path="invoices" element={<Invoices />} />
         <Route path="invoices/:invoiceId" element={<Invoices />} />
         <Route path="payments" element={<Payments />} />

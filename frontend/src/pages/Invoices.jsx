@@ -96,6 +96,9 @@ export default function Invoices() {
   const [saving, setSaving] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
 
+  const [productSearches, setProductSearches] = useState([""]);
+  const [productResults, setProductResults] = useState([[]]);
+
   const [viewInvoice, setViewInvoice] = useState(null);
   const [viewError, setViewError] = useState("");
   const [viewLoading, setViewLoading] = useState(false);
@@ -109,6 +112,11 @@ export default function Invoices() {
     const total = meta?.total_pages || 1;
     return Array.from({ length: total }, (_, i) => i + 1);
   }, [meta]);
+
+  const initializeProductLookups = (items = []) => {
+    setProductSearches(items.map((item) => item.description || ""));
+    setProductResults(items.map(() => []));
+  };
 
   const fetchInvoices = async (page = 1) => {
     try {
@@ -162,7 +170,9 @@ export default function Invoices() {
   };
 
   const openCreateForm = () => {
-    setFormData(createEmptyInvoice());
+    const emptyInvoice = createEmptyInvoice();
+    setFormData(emptyInvoice);
+    initializeProductLookups(emptyInvoice.items);
     setEditingId(null);
     setFormError("");
     setNotice("");
@@ -201,11 +211,15 @@ export default function Invoices() {
     setNotice("");
     setShowForm(true);
     setEditingId(invoiceId);
-    setFormData(createEmptyInvoice());
+    const placeholder = createEmptyInvoice();
+    setFormData(placeholder);
+    initializeProductLookups(placeholder.items);
 
     try {
       const data = await apiRequest(`/invoices/${invoiceId}`, { token });
-      setFormData(mapInvoiceToForm(data));
+      const mappedInvoice = mapInvoiceToForm(data);
+      setFormData(mappedInvoice);
+      initializeProductLookups(mappedInvoice.items);
     } catch (err) {
       setFormError(err.message || "Failed to load invoice");
     } finally {
@@ -232,6 +246,54 @@ export default function Invoices() {
     });
   };
 
+  const handleProductSearchChange = async (index, value) => {
+    setProductSearches((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+
+    if (!value.trim()) {
+      setProductResults((prev) => {
+        const next = [...prev];
+        next[index] = [];
+        return next;
+      });
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams();
+      params.set("q", value);
+      const data = await apiRequest(`/products/autocomplete?${params.toString()}`, { token });
+      setProductResults((prev) => {
+        const next = [...prev];
+        next[index] = data || [];
+        return next;
+      });
+    } catch (err) {
+      console.error("Failed to search products", err);
+    }
+  };
+
+  const selectProductForItem = (index, product) => {
+    const description = product.description || product.name || "";
+    handleItemChange(index, "description", description);
+    handleItemChange(index, "unit_price", product.unit_price || 0);
+    handleItemChange(index, "tax_rate", product.default_tax_rate ?? 0);
+
+    setProductSearches((prev) => {
+      const next = [...prev];
+      next[index] = `${product.name}${product.sku ? ` (${product.sku})` : ""}`;
+      return next;
+    });
+    setProductResults((prev) => {
+      const next = [...prev];
+      next[index] = [];
+      return next;
+    });
+  };
+
   const handlePaymentChange = (index, field, value) => {
     setFormData((prev) => {
       const payments = [...prev.payments];
@@ -245,6 +307,8 @@ export default function Invoices() {
       ...prev,
       items: [...prev.items, { ...emptyItem }],
     }));
+    setProductSearches((prev) => [...prev, ""]);
+    setProductResults((prev) => [...prev, []]);
   };
 
   const removeItemRow = (index) => {
@@ -252,6 +316,8 @@ export default function Invoices() {
       ...prev,
       items: prev.items.filter((_, i) => i !== index),
     }));
+    setProductSearches((prev) => prev.filter((_, i) => i !== index));
+    setProductResults((prev) => prev.filter((_, i) => i !== index));
   };
 
   const addPaymentRow = () => {
@@ -312,14 +378,16 @@ export default function Invoices() {
           token,
           body: payload,
         });
-        setNotice("Invoice created successfully.");
-      }
+      setNotice("Invoice created successfully.");
+    }
 
-      setShowForm(false);
-      setFormData(createEmptyInvoice());
-      setEditingId(null);
-      fetchInvoices(meta.current_page || 1);
-    } catch (err) {
+    setShowForm(false);
+    const emptyInvoice = createEmptyInvoice();
+    setFormData(emptyInvoice);
+    initializeProductLookups(emptyInvoice.items);
+    setEditingId(null);
+    fetchInvoices(meta.current_page || 1);
+  } catch (err) {
       setFormError(err.message || "Failed to save invoice");
     } finally {
       setSaving(false);
@@ -821,6 +889,57 @@ export default function Invoices() {
                     >
                       <div className="md:col-span-4">
                         <label className="block text-xs font-medium text-slate-600 mb-1">
+                          Product
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Search catalog..."
+                            value={productSearches[index] || ""}
+                            onChange={(e) =>
+                              handleProductSearchChange(index, e.target.value)
+                            }
+                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+                          />
+                          {productResults[index]?.length > 0 && (
+                            <div className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                              {productResults[index].map((product) => (
+                                <button
+                                  key={product.id}
+                                  type="button"
+                                  onClick={() => selectProductForItem(index, product)}
+                                  className="flex w-full items-start justify-between gap-2 px-3 py-2 text-left hover:bg-slate-50"
+                                >
+                                  <div>
+                                    <div className="text-sm font-semibold text-slate-900">
+                                      {product.name}
+                                      {product.sku && (
+                                        <span className="ml-1 text-xs text-slate-500">({product.sku})</span>
+                                      )}
+                                    </div>
+                                    {product.description && (
+                                      <div className="line-clamp-2 text-[11px] text-slate-500">
+                                        {product.description}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="text-xs font-semibold text-slate-700">
+                                    {formatMoney(
+                                      product.unit_price,
+                                      product.currency || "USD"
+                                    )}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          Selecting a product will auto-fill description, price, and tax.
+                        </p>
+                      </div>
+                      <div className="md:col-span-4">
+                        <label className="block text-xs font-medium text-slate-600 mb-1">
                           Description
                         </label>
                         <input
@@ -878,7 +997,7 @@ export default function Invoices() {
                           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
                         />
                       </div>
-                      <div className="flex items-center md:col-span-2 md:justify-end">
+                      <div className="flex items-center md:col-span-1 md:justify-end">
                         <button
                           type="button"
                           onClick={() => removeItemRow(index)}
