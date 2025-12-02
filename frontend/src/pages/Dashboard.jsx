@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   BanknotesIcon,
-  DocumentTextIcon,
+  DocumentChartBarIcon,
   UserGroupIcon,
   ExclamationTriangleIcon,
+  SparklesIcon,
+  Bars3BottomLeftIcon,
+  CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import {
   ResponsiveContainer,
@@ -15,7 +18,10 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  BarChart,
+  Bar,
 } from "recharts";
+import { API_BASE_URL } from "../api/client";
 
 function StatCard({ icon: Icon, label, value, helper }) {
   return (
@@ -34,13 +40,22 @@ function StatCard({ icon: Icon, label, value, helper }) {
   );
 }
 
+function EmptyState({ message }) {
+  return <p className="text-sm text-slate-500 text-center py-8">{message}</p>;
+}
+
 export default function Dashboard() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [reloadCount, setReloadCount] = useState(0);
+  const [range, setRange] = useState("30d");
+
+  const rangeLabel = useMemo(() => {
+    if (range === "90d") return "last 90 days";
+    return "last 30 days";
+  }, [range]);
 
   useEffect(() => {
     if (!token) return;
@@ -50,10 +65,13 @@ export default function Dashboard() {
     const fetchSummary = async () => {
       try {
         setLoading(true);
-        const res = await fetch("http://localhost:3000/api/dashboard/summary", {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        });
+        const res = await fetch(
+          `${API_BASE_URL}/dashboard/summary?range=${range}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          }
+        );
 
         if (res.status === 401) {
           logout();
@@ -81,34 +99,7 @@ export default function Dashboard() {
     fetchSummary();
 
     return () => controller.abort();
-  }, [token, logout, navigate, reloadCount]);
-
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
-  if (error) {
-    return (
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-        <p className="text-sm text-red-600 font-medium">{error}</p>
-        <button
-          className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          onClick={() => {
-            setError("");
-            setReloadCount((count) => count + 1);
-          }}
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (!summary) {
-    return <p>Loading...</p>;
-  }
-
-  const { totals, top_clients = [], monthly_series = [] } = summary;
+  }, [token, logout, navigate, range]);
 
   const formatMoney = (v) =>
     new Intl.NumberFormat("en-US", {
@@ -117,114 +108,294 @@ export default function Dashboard() {
       maximumFractionDigits: 0,
     }).format(Number(v || 0));
 
-  const chartData = monthly_series.map((m) => ({
-    month: m.month,
-    total: Number(m.total || 0),
+  const formatNumber = (v) => new Intl.NumberFormat("en-US").format(Number(v || 0));
+
+  const charts = summary?.charts || {};
+  const metrics = summary?.metrics || {};
+  const topClients = summary?.top_clients || [];
+
+  const kpiCards = [
+    {
+      icon: BanknotesIcon,
+      label: `Revenue (${rangeLabel})`,
+      value: formatMoney(metrics.total_revenue),
+      helper: "Paid or partially paid invoices",
+    },
+    {
+      icon: Bars3BottomLeftIcon,
+      label: "Outstanding invoices",
+      value: formatMoney(metrics.outstanding_invoices_amount),
+      helper: "Sent or overdue",
+    },
+    {
+      icon: ExclamationTriangleIcon,
+      label: "Overdue invoices",
+      value: formatNumber(metrics.overdue_invoices_count),
+      helper: "Due date passed",
+    },
+    {
+      icon: UserGroupIcon,
+      label: "Clients",
+      value: formatNumber(metrics.clients_count),
+      helper: "Active customers",
+    },
+    {
+      icon: DocumentChartBarIcon,
+      label: `Invoices created (${rangeLabel})`,
+      value: formatNumber(metrics.invoices_count),
+      helper: "Issued in the selected window",
+    },
+    {
+      icon: SparklesIcon,
+      label: `Avg invoice (${rangeLabel})`,
+      value: formatMoney(metrics.average_invoice_value),
+      helper: "For paid or partially paid",
+    },
+    {
+      icon: CheckCircleIcon,
+      label: "Current plan",
+      value: metrics.active_subscription_plan || "Free tier",
+      helper: metrics.subscription_status
+        ? `Subscription is ${metrics.subscription_status}`
+        : "No active subscription",
+    },
+  ];
+
+  const revenueData = (charts.revenue_timeseries || []).map((point) => ({
+    date: new Date(point.date).toLocaleDateString(),
+    total_revenue: Number(point.total_revenue || 0),
+    paid_invoices_count: Number(point.paid_invoices_count || 0),
   }));
+
+  const invoiceBreakdown = charts.invoice_status_breakdown || [];
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">
-          Welcome, {user?.name}
-        </h1>
-        <p className="text-sm text-slate-500">
-          Here&apos;s an overview of your business performance.
-        </p>
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={DocumentTextIcon}
-          label="Total Invoices"
-          value={totals.invoices_count}
-          helper="All time"
-        />
-        <StatCard
-          icon={UserGroupIcon}
-          label="Clients"
-          value={totals.clients_count}
-          helper="Active customers"
-        />
-        <StatCard
-          icon={BanknotesIcon}
-          label="This Month Revenue"
-          value={formatMoney(totals.month_total)}
-          helper="Invoiced this month"
-        />
-        <StatCard
-          icon={ExclamationTriangleIcon}
-          label="Overdue Invoices"
-          value={formatMoney(totals.overdue_total)}
-          helper="Total overdue amount"
-        />
-      </div>
-
-      {/* Grid: chart + top clients */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm lg:col-span-2">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-slate-800">
-              Revenue (last 6 months)
-            </h2>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2563eb" stopOpacity={0.7} />
-                    <stop offset="100%" stopColor="#2563eb" stopOpacity={0.1} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
-                <Tooltip
-                  formatter={(value) => formatMoney(value)}
-                  labelFormatter={(label) => `Month: ${label}`}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="total"
-                  stroke="#2563eb"
-                  fill="url(#colorTotal)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            A real-time snapshot of revenue, invoices, and customer momentum.
+          </p>
         </div>
+        <div className="flex items-center gap-3">
+          <label className="text-sm text-slate-600">Time range</label>
+          <select
+            value={range}
+            onChange={(e) => setRange(e.target.value)}
+            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+          </select>
+        </div>
+      </div>
 
-        {/* Top clients */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-800 mb-3">
-            Top Clients
-          </h2>
-          {top_clients.length === 0 ? (
-            <p className="text-sm text-slate-500">No data yet.</p>
-          ) : (
-            <ul className="divide-y divide-slate-100">
-              {top_clients.map((client) => (
-                <li
-                  key={client.id}
-                  className="py-2 flex items-center justify-between text-sm"
-                >
-                  <div>
-                    <p className="font-medium text-slate-800">{client.name}</p>
-                  </div>
-                  <p className="font-semibold text-slate-900">
-                    {formatMoney(client.total_spent)}
+      {/* Loading & error states */}
+      {loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, idx) => (
+            <div
+              key={idx}
+              className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm animate-pulse"
+            >
+              <div className="h-3 w-24 bg-slate-200 rounded mb-2" />
+              <div className="h-6 w-32 bg-slate-200 rounded" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+          <p className="text-sm text-red-600 font-medium">{error}</p>
+          <button
+            className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            onClick={() => {
+              setError("");
+              setSummary(null);
+              setLoading(true);
+              setRange(range);
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && summary && (
+        <>
+          {/* Stat cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            {kpiCards.map((card) => (
+              <StatCard key={card.label} {...card} />
+            ))}
+          </div>
+
+          {/* Charts & widgets */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Revenue chart */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm xl:col-span-2 flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-800">
+                    Revenue trend ({rangeLabel})
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Total invoice value for paid and partially paid invoices.
                   </p>
+                </div>
+              </div>
+              <div className="h-72">
+                {revenueData.length === 0 ? (
+                  <EmptyState message="Not enough data yet to display this chart." />
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={revenueData}>
+                      <defs>
+                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#2563eb" stopOpacity={0.7} />
+                          <stop offset="100%" stopColor="#2563eb" stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="date" stroke="#6b7280" />
+                      <YAxis stroke="#6b7280" tickFormatter={(v) => `$${v / 1000}k`} />
+                      <Tooltip formatter={(value) => formatMoney(value)} />
+                      <Area
+                        type="monotone"
+                        dataKey="total_revenue"
+                        stroke="#2563eb"
+                        fill="url(#colorRevenue)"
+                        strokeWidth={2}
+                        name="Revenue"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+
+            {/* Invoice breakdown */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-slate-800">
+                  Invoices by status
+                </h2>
+                <span className="text-xs text-slate-500">All time</span>
+              </div>
+              <div className="h-72">
+                {invoiceBreakdown.length === 0 ? (
+                  <EmptyState message="No invoices to show yet." />
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={invoiceBreakdown} layout="vertical" margin={{ left: 60 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="status" type="category" stroke="#6b7280" />
+                      <Tooltip
+                        formatter={(value, name) =>
+                          name === "count" ? formatNumber(value) : formatMoney(value)
+                        }
+                        labelFormatter={(label) => `Status: ${label}`}
+                      />
+                      <Bar dataKey="count" name="Count" fill="#0ea5e9" radius={4} barSize={14} />
+                      <Bar
+                        dataKey="total_amount"
+                        name="Total Amount"
+                        fill="#22c55e"
+                        radius={4}
+                        barSize={14}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom widgets */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Top clients */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm xl:col-span-2">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-800">Top clients</h2>
+                  <p className="text-xs text-slate-500">Based on revenue in the selected range.</p>
+                </div>
+              </div>
+              {topClients.length === 0 ? (
+                <EmptyState message="No client revenue yet for this period." />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-slate-500">
+                        <th className="py-2 pr-4">Client</th>
+                        <th className="py-2 pr-4">Invoices</th>
+                        <th className="py-2 pr-4">Total revenue</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {topClients.map((client) => (
+                        <tr key={client.client_id} className="hover:bg-slate-50">
+                          <td className="py-3 pr-4 font-medium text-slate-900">
+                            {client.client_name}
+                          </td>
+                          <td className="py-3 pr-4 text-slate-700">
+                            {formatNumber(client.invoices_count)}
+                          </td>
+                          <td className="py-3 pr-4 font-semibold text-slate-900">
+                            {formatMoney(client.total_revenue)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Quick KPI recap */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <h2 className="text-sm font-semibold text-slate-800 mb-3">Highlights</h2>
+              <ul className="space-y-3 text-sm text-slate-700">
+                <li className="flex items-center justify-between">
+                  <span>Revenue ({rangeLabel})</span>
+                  <span className="font-semibold text-slate-900">
+                    {formatMoney(metrics.total_revenue)}
+                  </span>
                 </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
+                <li className="flex items-center justify-between">
+                  <span>Outstanding invoices</span>
+                  <span className="font-semibold text-slate-900">
+                    {formatMoney(metrics.outstanding_invoices_amount)}
+                  </span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span>Overdue invoices</span>
+                  <span className="font-semibold text-slate-900">
+                    {formatNumber(metrics.overdue_invoices_count)}
+                  </span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span>Invoices created ({rangeLabel})</span>
+                  <span className="font-semibold text-slate-900">
+                    {formatNumber(metrics.invoices_count)}
+                  </span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span>Average invoice value</span>
+                  <span className="font-semibold text-slate-900">
+                    {formatMoney(metrics.average_invoice_value)}
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
