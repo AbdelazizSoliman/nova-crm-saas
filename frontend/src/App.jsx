@@ -9,6 +9,7 @@ import Settings from "./pages/Settings";
 import Payments from "./pages/Payments";
 import Products from "./pages/Products";
 import ActivityLog from "./pages/ActivityLog";
+import Billing from "./pages/Billing";
 export default function App() {
   return (
     <Routes>
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="invoices/:invoiceId" element={<Invoices />} />
         <Route path="payments" element={<Payments />} />
         <Route path="activity-log" element={<ActivityLog />} />
+        <Route path="billing" element={<Billing />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 
