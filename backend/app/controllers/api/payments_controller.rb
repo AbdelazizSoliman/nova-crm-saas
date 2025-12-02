@@ -51,6 +51,20 @@ module Api
 
       if payment.save
         @invoice.recalculate_totals!
+
+        ActivityLogger.log(
+          account: current_account,
+          user: current_user,
+          action: "payment_created",
+          record: payment,
+          metadata: {
+            invoice_number: @invoice.number,
+            amount: payment.amount,
+            method: payment.method,
+            payment_date: payment.paid_at
+          },
+          request: request
+        )
         render json: payment, status: :created
       else
         render json: { errors: payment.errors.full_messages }, status: :unprocessable_entity

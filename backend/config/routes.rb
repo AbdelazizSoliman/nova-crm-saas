@@ -17,6 +17,8 @@ Rails.application.routes.draw do
     put "settings/profile", to: "settings#update_profile"
     put "settings/account", to: "settings#update_account"
 
+    resources :activity_logs, only: %i[index]
+
     resources :products do
       collection do
         get :autocomplete

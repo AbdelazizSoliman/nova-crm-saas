@@ -2,7 +2,7 @@ module Api
   class ClientsController < BaseController
     before_action :set_client, only: %i[show update destroy]
 
-   def index
+    def index
       scope = current_account.clients.order(created_at: :desc)
 
       if params[:q].present?
@@ -29,6 +29,18 @@ module Api
     def create
       client = current_account.clients.new(client_params)
       if client.save
+        ActivityLogger.log(
+          account: current_account,
+          user: current_user,
+          action: "client_created",
+          record: client,
+          metadata: {
+            name: client.name,
+            email: client.email,
+            country: client.country
+          },
+          request: request
+        )
         render json: client, status: :created
       else
         render json: { errors: client.errors.full_messages }, status: :unprocessable_entity
@@ -37,6 +49,18 @@ module Api
 
     def update
       if @client.update(client_params)
+        ActivityLogger.log(
+          account: current_account,
+          user: current_user,
+          action: "client_updated",
+          record: @client,
+          metadata: {
+            name: @client.name,
+            email: @client.email,
+            changes: @client.previous_changes.except("created_at", "updated_at")
+          },
+          request: request
+        )
         render json: @client
       else
         render json: { errors: @client.errors.full_messages }, status: :unprocessable_entity

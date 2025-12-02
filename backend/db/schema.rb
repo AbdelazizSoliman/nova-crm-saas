@@ -10,9 +10,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_12_01_190000) do
+ActiveRecord::Schema[7.1].define(version: 2025_12_02_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "activity_logs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "user_id"
+    t.string "action", null: false
+    t.string "record_type"
+    t.bigint "record_id"
+    t.jsonb "metadata", default: {}, null: false
+    t.string "ip"
+    t.string "user_agent"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "created_at"], name: "index_activity_logs_on_account_id_and_created_at"
+    t.index ["record_type", "record_id"], name: "index_activity_logs_on_record_type_and_record_id"
+    t.index ["user_id"], name: "index_activity_logs_on_user_id"
+  end
 
   create_table "accounts", force: :cascade do |t|
     t.string "name"
@@ -120,6 +136,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_01_190000) do
     t.index ["name"], name: "index_products_on_name"
   end
 
+  add_foreign_key "activity_logs", "accounts"
+  add_foreign_key "activity_logs", "users"
   add_foreign_key "clients", "accounts"
   add_foreign_key "invoice_items", "invoices"
   add_foreign_key "invoices", "accounts"

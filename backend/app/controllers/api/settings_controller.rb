@@ -9,11 +9,33 @@ module Api
     def update_profile
       current_user.update!(profile_attributes)
 
+      ActivityLogger.log(
+        account: current_account,
+        user: current_user,
+        action: "profile_updated",
+        record: current_user,
+        metadata: {
+          changes: current_user.previous_changes.except("created_at", "updated_at", "password_digest")
+        },
+        request: request
+      )
+
       render json: { profile: profile_payload(current_user) }
     end
 
     def update_account
       current_account.update!(account_params.merge(invoicing_params))
+
+      ActivityLogger.log(
+        account: current_account,
+        user: current_user,
+        action: "account_settings_updated",
+        record: current_account,
+        metadata: {
+          changes: current_account.previous_changes.except("created_at", "updated_at")
+        },
+        request: request
+      )
 
       render json: serialized_settings.slice(:account, :invoicing)
     end
