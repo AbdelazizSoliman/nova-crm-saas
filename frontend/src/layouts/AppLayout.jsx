@@ -9,6 +9,7 @@ import {
   ArrowRightOnRectangleIcon,
   BanknotesIcon,
   ClockIcon,
+  CreditCardIcon,
 } from "@heroicons/react/24/outline";
 
 const navItems = [
@@ -18,6 +19,7 @@ const navItems = [
   { to: "/invoices", label: "Invoices", icon: DocumentTextIcon },
   { to: "/payments", label: "Payments", icon: BanknotesIcon },
   { to: "/activity-log", label: "Activity Log", icon: ClockIcon },
+  { to: "/billing", label: "Billing", icon: CreditCardIcon },
   { to: "/settings", label: "Settings", icon: Cog6ToothIcon },
 ];
 

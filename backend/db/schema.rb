@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_12_02_000000) do
+ActiveRecord::Schema[7.1].define(version: 2025_12_03_121000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -103,22 +103,21 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_02_000000) do
     t.index ["invoice_id"], name: "index_payments_on_invoice_id"
   end
 
-  create_table "products", force: :cascade do |t|
-    t.bigint "account_id", null: false
+  create_table "plans", force: :cascade do |t|
     t.string "name", null: false
-    t.string "sku"
+    t.string "code", null: false
+    t.decimal "price", precision: 10, scale: 2, default: "0.0", null: false
+    t.string "currency", default: "USD", null: false
+    t.string "interval", default: "month", null: false
+    t.integer "max_users"
+    t.integer "max_clients"
+    t.integer "max_invoices_per_month"
+    t.integer "max_storage_mb"
     t.text "description"
-    t.decimal "unit_price", precision: 12, scale: 2, default: "0.0", null: false
-    t.decimal "default_tax_rate", precision: 5, scale: 2
-    t.string "currency"
     t.boolean "is_active", default: true, null: false
-    t.string "product_type"
-    t.string "category"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["account_id", "sku"], name: "index_products_on_account_id_and_sku", unique: true, where: "(sku IS NOT NULL)"
-    t.index ["account_id"], name: "index_products_on_account_id"
-    t.index ["name"], name: "index_products_on_name"
+    t.index ["code"], name: "index_plans_on_code", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -138,6 +137,38 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_02_000000) do
     t.index ["account_id"], name: "index_users_on_account_id"
   end
 
+  create_table "subscriptions", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "plan_id", null: false
+    t.string "status", default: "active", null: false
+    t.datetime "current_period_start"
+    t.datetime "current_period_end"
+    t.boolean "cancel_at_period_end", default: false, null: false
+    t.datetime "trial_ends_at"
+    t.string "external_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "status"], name: "index_subscriptions_on_account_id_and_status"
+    t.index ["plan_id"], name: "index_subscriptions_on_plan_id"
+  end
+
+  create_table "products", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.string "sku"
+    t.text "description"
+    t.decimal "unit_price", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "default_tax_rate", precision: 5, scale: 2
+    t.string "currency"
+    t.boolean "is_active", default: true, null: false
+    t.string "product_type"
+    t.string "category"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "sku"], name: "index_products_on_account_id_and_sku", unique: true, where: "(sku IS NOT NULL)"
+    t.index ["name"], name: "index_products_on_name"
+  end
+
   add_foreign_key "activity_logs", "accounts"
   add_foreign_key "activity_logs", "users"
   add_foreign_key "clients", "accounts"
@@ -145,6 +176,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_02_000000) do
   add_foreign_key "invoices", "accounts"
   add_foreign_key "invoices", "clients"
   add_foreign_key "payments", "invoices"
+  add_foreign_key "users", "accounts"
+  add_foreign_key "subscriptions", "accounts"
+  add_foreign_key "subscriptions", "plans"
   add_foreign_key "products", "accounts"
   add_foreign_key "users", "accounts"
 end
