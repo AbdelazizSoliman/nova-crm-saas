@@ -14,22 +14,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_02_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "activity_logs", force: :cascade do |t|
-    t.bigint "account_id", null: false
-    t.bigint "user_id"
-    t.string "action", null: false
-    t.string "record_type"
-    t.bigint "record_id"
-    t.jsonb "metadata", default: {}, null: false
-    t.string "ip"
-    t.string "user_agent"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["account_id", "created_at"], name: "index_activity_logs_on_account_id_and_created_at"
-    t.index ["record_type", "record_id"], name: "index_activity_logs_on_record_type_and_record_id"
-    t.index ["user_id"], name: "index_activity_logs_on_user_id"
-  end
-
   create_table "accounts", force: :cascade do |t|
     t.string "name"
     t.string "logo_url"
@@ -45,6 +29,23 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_02_000000) do
     t.string "invoice_prefix", default: "INV", null: false
     t.decimal "default_tax_rate", precision: 5, scale: 2, default: "0.0", null: false
     t.integer "default_payment_terms_days", default: 7, null: false
+  end
+
+  create_table "activity_logs", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.bigint "user_id"
+    t.string "action", null: false
+    t.string "record_type"
+    t.bigint "record_id"
+    t.jsonb "metadata", default: {}, null: false
+    t.string "ip"
+    t.string "user_agent"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "created_at"], name: "index_activity_logs_on_account_id_and_created_at"
+    t.index ["account_id"], name: "index_activity_logs_on_account_id"
+    t.index ["record_type", "record_id"], name: "index_activity_logs_on_record_type_and_record_id"
+    t.index ["user_id"], name: "index_activity_logs_on_user_id"
   end
 
   create_table "clients", force: :cascade do |t|
@@ -102,6 +103,24 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_02_000000) do
     t.index ["invoice_id"], name: "index_payments_on_invoice_id"
   end
 
+  create_table "products", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.string "name", null: false
+    t.string "sku"
+    t.text "description"
+    t.decimal "unit_price", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "default_tax_rate", precision: 5, scale: 2
+    t.string "currency"
+    t.boolean "is_active", default: true, null: false
+    t.string "product_type"
+    t.string "category"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "sku"], name: "index_products_on_account_id_and_sku", unique: true, where: "(sku IS NOT NULL)"
+    t.index ["account_id"], name: "index_products_on_account_id"
+    t.index ["name"], name: "index_products_on_name"
+  end
+
   create_table "users", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.string "first_name"
@@ -119,23 +138,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_02_000000) do
     t.index ["account_id"], name: "index_users_on_account_id"
   end
 
-  create_table "products", force: :cascade do |t|
-    t.bigint "account_id", null: false
-    t.string "name", null: false
-    t.string "sku"
-    t.text "description"
-    t.decimal "unit_price", precision: 12, scale: 2, default: "0.0", null: false
-    t.decimal "default_tax_rate", precision: 5, scale: 2
-    t.string "currency"
-    t.boolean "is_active", default: true, null: false
-    t.string "product_type"
-    t.string "category"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["account_id", "sku"], name: "index_products_on_account_id_and_sku", unique: true, where: "(sku IS NOT NULL)"
-    t.index ["name"], name: "index_products_on_name"
-  end
-
   add_foreign_key "activity_logs", "accounts"
   add_foreign_key "activity_logs", "users"
   add_foreign_key "clients", "accounts"
@@ -143,6 +145,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_02_000000) do
   add_foreign_key "invoices", "accounts"
   add_foreign_key "invoices", "clients"
   add_foreign_key "payments", "invoices"
-  add_foreign_key "users", "accounts"
   add_foreign_key "products", "accounts"
+  add_foreign_key "users", "accounts"
 end
