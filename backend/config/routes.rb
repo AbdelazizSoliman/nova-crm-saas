@@ -24,6 +24,7 @@ Rails.application.routes.draw do
     resources :invoices do
       member do
         post :duplicate
+        post :send_email
         get :pdf
       end
 

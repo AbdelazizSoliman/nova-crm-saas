@@ -1,0 +1,32 @@
+<div style="font-family: Arial, sans-serif; color: #0f172a;">
+  <% if @account&.company_logo_url.present? %>
+    <div style="margin-bottom: 12px;">
+      <img src="<%= @account.company_logo_url %>" alt="<%= @account.company_name || 'Company logo' %>" style="max-height: 64px;">
+    </div>
+  <% end %>
+
+  <h1 style="font-size: 22px; margin: 0 0 10px;">Invoice <%= @invoice.number %></h1>
+  <p style="margin: 0 0 12px; color: #334155;">Please find your invoice attached as a PDF.</p>
+
+  <div style="padding: 12px; background-color: #f8fafc; border-radius: 8px; margin-bottom: 16px;">
+    <p style="margin: 0 0 8px; color: #1e293b;"><strong>Message:</strong></p>
+    <div style="white-space: pre-wrap; color: #334155; font-size: 14px;">
+      <%= @message_body.presence || "Please find attached your invoice." %>
+    </div>
+  </div>
+
+  <div style="margin-bottom: 16px;">
+    <p style="margin: 0 0 4px; color: #334155;"><strong>Invoice summary</strong></p>
+    <ul style="margin: 0; padding-left: 18px; color: #475569; font-size: 14px;">
+      <li>Client: <%= @client&.name || 'Client' %></li>
+      <li>Total amount: <%= number_to_currency(@invoice.total, unit: @invoice.currency || @account&.default_currency || 'USD') %></li>
+      <li>Status: <%= @invoice.status.to_s.titleize %></li>
+      <li>Issue date: <%= @invoice.issue_date || '-' %></li>
+      <li>Due date: <%= @invoice.due_date || '-' %></li>
+    </ul>
+  </div>
+
+  <p style="margin: 0 0 8px; color: #475569;">A PDF copy of invoice <strong><%= @invoice.number %></strong> is attached to this email.</p>
+
+  <p style="margin-top: 16px; color: #334155;">Regards,<br /><strong><%= @account&.company_name || 'The Team' %></strong></p>
+</div>

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL, apiRequest } from "../api/client";
 import AddPaymentModal from "../components/AddPaymentModal";
+import SendInvoiceEmailModal from "../components/SendInvoiceEmailModal";
 
 const statusBadges = {
   draft: "bg-slate-100 text-slate-700", // gray
@@ -102,6 +103,7 @@ export default function Invoices() {
   const [pdfLoading, setPdfLoading] = useState(false);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showSendEmailModal, setShowSendEmailModal] = useState(false);
 
   const pages = useMemo(() => {
     const total = meta?.total_pages || 1;
@@ -1019,6 +1021,13 @@ export default function Invoices() {
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  onClick={() => setShowSendEmailModal(true)}
+                  disabled={viewLoading}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                >
+                  Send by Email
+                </button>
+                <button
                   onClick={() => handleDownloadPdf(viewInvoice)}
                   disabled={pdfLoading || viewLoading}
                   className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
@@ -1040,6 +1049,7 @@ export default function Invoices() {
                 <button
                   onClick={() => {
                     setShowPaymentModal(false);
+                    setShowSendEmailModal(false);
                     setViewInvoice(null);
                   }}
                   className="text-sm text-slate-500 hover:text-slate-800"
@@ -1204,6 +1214,16 @@ export default function Invoices() {
           invoiceId={viewInvoice.id}
           onClose={() => setShowPaymentModal(false)}
           onSuccess={() => handlePaymentCreated(viewInvoice.id)}
+        />
+      )}
+      {showSendEmailModal && viewInvoice?.id && (
+        <SendInvoiceEmailModal
+          invoice={viewInvoice}
+          onClose={() => setShowSendEmailModal(false)}
+          onSent={() => {
+            setShowSendEmailModal(false);
+            setNotice("Email sent successfully.");
+          }}
         />
       )}
     </div>
