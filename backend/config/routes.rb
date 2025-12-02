@@ -28,7 +28,7 @@ Rails.application.routes.draw do
     resources :clients
 
     resources :payments, only: %i[index destroy]
-    
+
     resources :invoices do
       member do
         post :duplicate
@@ -38,5 +38,8 @@ Rails.application.routes.draw do
 
       resources :payments, only: %i[index create]
     end
+
+    resources :plans, only: %i[index]
+    resource :subscription, only: %i[show create update]
   end
 end
