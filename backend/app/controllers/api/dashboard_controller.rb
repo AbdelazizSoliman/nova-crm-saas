@@ -36,7 +36,7 @@ module Api
 
         {
           month: month.strftime("%Y-%m"),
-          total:
+          total: total
         }
       end.reverse
 
@@ -51,7 +51,7 @@ module Api
         top_clients: top_clients.map { |id, name, total_spent|
           { id:, name:, total_spent: }
         },
-        monthly_series:
+        monthly_series: monthly_series
       }
     end
   end

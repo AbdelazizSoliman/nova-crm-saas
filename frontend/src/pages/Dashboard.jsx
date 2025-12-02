@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   BanknotesIcon,
@@ -34,17 +35,74 @@ function StatCard({ icon: Icon, label, value, helper }) {
 }
 
 export default function Dashboard() {
-  const { user, token } = useAuth();
+  const { user, token, logout } = useAuth();
+  const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [reloadCount, setReloadCount] = useState(0);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/dashboard/summary", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => setSummary(data))
-      .catch(() => setSummary(null));
-  }, [token]);
+    if (!token) return;
+
+    const controller = new AbortController();
+
+    const fetchSummary = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("http://localhost:3000/api/dashboard/summary", {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+
+        if (res.status === 401) {
+          logout();
+          navigate("/login", { replace: true });
+          return;
+        }
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to load dashboard data");
+        }
+
+        setSummary(data);
+        setError("");
+      } catch (err) {
+        if (err.name === "AbortError") return;
+        setError(err.message || "Failed to load dashboard data");
+        setSummary(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSummary();
+
+    return () => controller.abort();
+  }, [token, logout, navigate, reloadCount]);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <p className="text-sm text-red-600 font-medium">{error}</p>
+        <button
+          className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          onClick={() => {
+            setError("");
+            setReloadCount((count) => count + 1);
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   if (!summary) {
     return <p>Loading...</p>;

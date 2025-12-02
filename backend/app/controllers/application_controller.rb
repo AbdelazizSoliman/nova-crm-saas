@@ -55,7 +55,7 @@ class ApplicationController < ActionController::API
       current_page: page,
       per_page:,
       total_records: total,
-      total_pages:
+      total_pages: total_pages
     }]
   end
 end
