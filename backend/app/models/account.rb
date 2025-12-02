@@ -6,6 +6,7 @@ class Account < ApplicationRecord
   has_many :products, dependent: :destroy
   has_many :invoices, dependent: :destroy
   has_many :payments, through: :invoices
+  has_many :activity_logs, dependent: :destroy
 
   validates :default_currency, inclusion: { in: VALID_CURRENCIES }
   validates :invoice_prefix, presence: true

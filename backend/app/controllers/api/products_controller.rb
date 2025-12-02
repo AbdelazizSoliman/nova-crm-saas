@@ -33,6 +33,19 @@ module Api
       product = current_account.products.new(product_params)
 
       if product.save
+        ActivityLogger.log(
+          account: current_account,
+          user: current_user,
+          action: "product_created",
+          record: product,
+          metadata: {
+            name: product.name,
+            sku: product.sku,
+            unit_price: product.unit_price,
+            product_type: product.product_type
+          },
+          request: request
+        )
         render json: product, status: :created
       else
         render json: { errors: product.errors.full_messages }, status: :unprocessable_entity
@@ -41,6 +54,18 @@ module Api
 
     def update
       if @product.update(product_params)
+        ActivityLogger.log(
+          account: current_account,
+          user: current_user,
+          action: "product_updated",
+          record: @product,
+          metadata: {
+            name: @product.name,
+            sku: @product.sku,
+            changes: @product.previous_changes.except("created_at", "updated_at")
+          },
+          request: request
+        )
         render json: @product
       else
         render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity
@@ -49,6 +74,17 @@ module Api
 
     def destroy
       if @product.update(is_active: false)
+        ActivityLogger.log(
+          account: current_account,
+          user: current_user,
+          action: "product_deactivated",
+          record: @product,
+          metadata: {
+            name: @product.name,
+            sku: @product.sku
+          },
+          request: request
+        )
         render json: { success: true }
       else
         render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity

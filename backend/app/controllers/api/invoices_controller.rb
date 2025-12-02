@@ -81,6 +81,19 @@ module Api
 
       InvoiceMailer.send_invoice(@invoice, recipient:, subject:, message:).deliver_now
 
+      ActivityLogger.log(
+        account: current_account,
+        user: current_user,
+        action: "invoice_sent_email",
+        record: @invoice,
+        metadata: {
+          number: @invoice.number,
+          recipient: recipient,
+          subject: subject
+        },
+        request: request
+      )
+
       render json: { success: true, message: "Email sent successfully." }
     rescue StandardError => e
       Rails.logger.error("Invoice email failed: #{e.message}")
@@ -101,6 +114,21 @@ module Api
         invoice.recalculate_totals!
       end
 
+      ActivityLogger.log(
+        account: current_account,
+        user: current_user,
+        action: "invoice_created",
+        record: invoice,
+        metadata: {
+          number: invoice.number,
+          client_id: invoice.client_id,
+          total: invoice.total,
+          currency: invoice.currency,
+          status: invoice.status
+        },
+        request: request
+      )
+
       render json: invoice.as_json(
         include: {
           client: { only: %i[id name] },
@@ -114,6 +142,8 @@ module Api
 
     # PATCH/PUT /api/invoices/:id
     def update
+      status_before = @invoice.status
+
       Invoice.transaction do
         @invoice.assign_attributes(base_invoice_params)
         @invoice.client = current_account.clients.find(params[:client_id]) if params[:client_id].present?
@@ -127,6 +157,20 @@ module Api
         @invoice.save!
         @invoice.recalculate_totals!
       end
+
+      ActivityLogger.log(
+        account: current_account,
+        user: current_user,
+        action: "invoice_updated",
+        record: @invoice,
+        metadata: {
+          number: @invoice.number,
+          status_before: status_before,
+          status_after: @invoice.status,
+          changes: @invoice.previous_changes.except("created_at", "updated_at")
+        },
+        request: request
+      )
 
       render json: @invoice.as_json(
         include: {
