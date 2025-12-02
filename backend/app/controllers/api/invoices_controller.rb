@@ -1,6 +1,6 @@
 module Api
   class InvoicesController < BaseController
-    before_action :set_invoice, only: %i[show update destroy pdf]
+    before_action :set_invoice, only: %i[show update destroy pdf send_email]
 
     # GET /api/invoices
     def index
@@ -69,6 +69,24 @@ module Api
                 disposition: "inline"
     end
 
+    # POST /api/invoices/:id/send_email
+    def send_email
+      recipient = email_params[:recipient].presence || @invoice.client&.email
+      subject   = email_params[:subject].presence || "Invoice #{@invoice.number}"
+      message   = email_params[:message].presence || "Please find attached your invoice."
+
+      unless recipient.present?
+        return render json: { error: "Recipient email is required" }, status: :unprocessable_entity
+      end
+
+      InvoiceMailer.send_invoice(@invoice, recipient:, subject:, message:).deliver_now
+
+      render json: { success: true, message: "Email sent successfully." }
+    rescue StandardError => e
+      Rails.logger.error("Invoice email failed: #{e.message}")
+      render json: { error: "Failed to send email: #{e.message}" }, status: :internal_server_error
+    end
+
     # POST /api/invoices
     # يستقبل فاتورة + items + payments في نفس الريكوست
     def create
@@ -134,6 +152,10 @@ module Api
                   .invoices
                   .includes(:client, :invoice_items, :payments)
                   .find(params[:id])
+    end
+
+    def email_params
+      params.permit(:recipient, :subject, :message)
     end
 
     # بيانات الفاتورة الأساسية (بدون items/payments)
