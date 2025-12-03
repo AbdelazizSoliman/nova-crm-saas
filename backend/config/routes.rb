@@ -16,6 +16,8 @@ Rails.application.routes.draw do
     get "settings", to: "settings#show"
     put "settings/profile", to: "settings#update_profile"
     put "settings/account", to: "settings#update_account"
+    get "settings/invoice", to: "settings#invoice_branding"
+    patch "settings/invoice", to: "settings#update_invoice_branding"
 
     resources :activity_logs, only: %i[index]
 
@@ -30,6 +32,10 @@ Rails.application.routes.draw do
     resources :payments, only: %i[index destroy]
 
     resources :invoices do
+      collection do
+        post :preview_pdf
+      end
+
       member do
         post :duplicate
         post :send_email
