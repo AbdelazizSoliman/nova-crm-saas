@@ -35,7 +35,7 @@ module Api
           include: {
             client: { only: %i[id name contact_name email] }
           },
-          only: %i[id number issue_date due_date currency status subtotal tax_total total created_at]
+          only: %i[id number issue_date due_date currency tax_name tax_rate status subtotal tax_total total created_at]
         ),
         meta:
       }
@@ -189,58 +189,7 @@ module Api
       head :no_content
     end
 
-    private
-
-    def set_invoice
-      @invoice = current_account
-                  .invoices
-                  .includes(:client, :invoice_items, :payments)
-                  .find(params[:id])
-    end
-
-    def email_params
-      params.permit(:recipient, :subject, :message)
-    end
-
-    # بيانات الفاتورة الأساسية (بدون items/payments)
-    def base_invoice_params
-      params.require(:invoice).permit(
-        :number,
-        :issue_date,
-        :due_date,
-        :currency,
-        :status,
-        :notes
-      )
-    end
-
-    # items = [{ description, quantity, unit_price, tax_rate }]
-    def build_items(invoice)
-      items = params[:items] || []
-      items.each do |item|
-        invoice.invoice_items.build(
-          description: item[:description],
-          quantity:    item[:quantity],
-          unit_price:  item[:unit_price],
-          tax_rate:    item[:tax_rate] || 0
-        )
-      end
-    end
-
-    # payments = [{ amount, paid_at, method, note }]
-    def build_payments(invoice)
-      payments = params[:payments] || []
-      payments.each do |p|
-        invoice.payments.build(
-          amount:  p[:amount],
-          paid_at: p[:paid_at] || Time.current,
-          method:  p[:method] || "manual",
-          note:    p[:note]
-        )
-      end
-    end
-
-        def duplicate
+    def duplicate
       original = current_account.invoices.includes(:invoice_items).find(params[:id])
 
       dup_invoice = current_account.invoices.new(
@@ -248,6 +197,8 @@ module Api
         issue_date: Date.current,
         due_date: Date.current + 7.days,
         currency: original.currency,
+        tax_rate: original.tax_rate,
+        tax_name: original.tax_name,
         status: "draft",
         notes: "Duplicate of #{original.number}"
       )
@@ -274,6 +225,67 @@ module Api
       ), status: :created
     rescue ActiveRecord::RecordInvalid => e
       render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+    end
+
+    private
+
+    def set_invoice
+      @invoice = current_account
+                  .invoices
+                  .includes(:client, :invoice_items, :payments)
+                  .find(params[:id])
+    end
+
+    def email_params
+      params.permit(:recipient, :subject, :message)
+    end
+
+    # بيانات الفاتورة الأساسية (بدون items/payments)
+    def base_invoice_params
+      defaults = {
+        currency: current_account.default_currency,
+        tax_rate: current_account.tax_rate,
+        tax_name: current_account.tax_name
+      }
+
+      params
+        .require(:invoice)
+        .permit(:number, :issue_date, :due_date, :currency, :status, :notes, :tax_rate, :tax_name)
+        .reverse_merge(defaults)
+    end
+
+    # items = [{ description, quantity, unit_price, tax_rate }]
+    def build_items(invoice)
+      items = params[:items] || []
+      items.each do |item|
+        product = find_product_for_item(item[:product_id])
+
+        invoice.invoice_items.build(
+          description: item[:description].presence || product&.name,
+          quantity:    item[:quantity],
+          unit_price:  item[:unit_price].presence || product&.unit_price,
+          tax_rate:    invoice.tax_rate
+        )
+      end
+    end
+
+    # payments = [{ amount, paid_at, method, note }]
+    def build_payments(invoice)
+      payments = params[:payments] || []
+      payments.each do |p|
+        invoice.payments.build(
+          amount:  p[:amount],
+          paid_at: p[:paid_at] || Time.current,
+          method:  p[:method] || "manual",
+          note:    p[:note]
+        )
+      end
+    end
+
+    def find_product_for_item(product_id)
+      return if product_id.blank?
+
+      current_account.products.find_by(id: product_id)
     end
   end
 end

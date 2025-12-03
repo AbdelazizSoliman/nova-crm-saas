@@ -96,7 +96,7 @@ class InvoicePdfGenerator
   end
 
   def build_items(pdf)
-    data = [["Item", "Qty", "Unit Price", "Tax %", "Line Total"]]
+    data = [["Item", "Qty", "Unit Price", tax_label, "Line Total"]]
 
     if invoice.invoice_items.any?
       invoice.invoice_items.each do |item|
@@ -104,7 +104,7 @@ class InvoicePdfGenerator
           item.description,
           item.quantity,
           money(item.unit_price),
-          item.tax_rate.to_f,
+          invoice.tax_rate.to_f,
           money(item.line_total)
         ]
       end
@@ -134,7 +134,7 @@ class InvoicePdfGenerator
       pdf.table(
         [
           ["Subtotal", money(invoice.subtotal)],
-          ["Tax", money(invoice.tax_total)],
+          [tax_label, money(invoice.tax_total)],
           ["Total", money(invoice.total)],
           ["Payments", money(payments_total)],
           ["Balance Due", money(balance_due)]
@@ -207,6 +207,12 @@ class InvoicePdfGenerator
 
   def currency_code
     invoice.currency.presence || account.default_currency || "USD"
+  end
+
+  def tax_label
+    name = invoice.tax_name.presence || account.tax_name.presence || "Tax"
+    rate = invoice.tax_rate.present? ? invoice.tax_rate.to_f : account.tax_rate.to_f
+    "#{name} (#{format('%.2f', rate)}%)"
   end
 
   def format_phone(phone)
