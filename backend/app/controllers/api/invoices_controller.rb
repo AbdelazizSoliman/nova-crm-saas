@@ -189,6 +189,27 @@ module Api
       head :no_content
     end
 
+    def preview_pdf
+      invoice = current_account.invoices.new(base_invoice_params)
+      invoice.client = find_preview_client
+      invoice.status ||= "draft"
+      invoice.number ||= "PREVIEW-#{Time.current.to_i}"
+
+      build_items(invoice)
+      build_payments(invoice)
+      calculate_preview_totals(invoice)
+
+      pdf_data = InvoicePdfGenerator.new(invoice, template: params[:template], branding: preview_branding_params).render
+
+      send_data pdf_data,
+                filename: "invoice-preview.pdf",
+                type: "application/pdf",
+                disposition: "inline"
+    rescue StandardError => e
+      Rails.logger.error("Invoice preview failed: #{e.message}")
+      render json: { error: "Could not generate preview: #{e.message}" }, status: :unprocessable_entity
+    end
+
     def duplicate
       original = current_account.invoices.includes(:invoice_items).find(params[:id])
 
@@ -286,6 +307,27 @@ module Api
       return if product_id.blank?
 
       current_account.products.find_by(id: product_id)
+    end
+
+    def find_preview_client
+      return current_account.clients.find_by(id: params[:client_id]) if params[:client_id].present?
+
+      preview_client = params.fetch(:client, {}).slice(:name, :contact_name, :email)
+      current_account.clients.new(preview_client.presence || { name: "Preview Client" })
+    end
+
+    def calculate_preview_totals(invoice)
+      invoice.invoice_items.each do |item|
+        item.line_total = item.quantity.to_d * item.unit_price.to_d
+      end
+
+      invoice.subtotal  = invoice.invoice_items.sum { |item| item.line_total.to_d }
+      invoice.tax_total = invoice.subtotal.to_d * (invoice.tax_rate.to_d / 100.0)
+      invoice.total     = invoice.subtotal.to_d + invoice.tax_total.to_d
+    end
+
+    def preview_branding_params
+      params.fetch(:branding, {}).permit(:brand_color, :footer_text, :additional_note, :template)
     end
   end
 end
