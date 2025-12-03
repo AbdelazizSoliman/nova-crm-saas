@@ -14,9 +14,13 @@ const defaultAccountState = {
 const defaultInvoicingState = {
   default_currency: "USD",
   invoice_prefix: "INV",
-  default_tax_rate: 0,
+  tax_name: "VAT",
+  tax_rate: 0,
+  tax_inclusive: false,
   default_payment_terms_days: 7,
 };
+
+const currencyOptions = ["USD", "EUR", "GBP", "SAR", "EGP"];
 
 export default function Settings() {
   const { token, user } = useAuth();
@@ -50,6 +54,18 @@ export default function Settings() {
   const [account, setAccount] = useState(defaultAccountState);
   const [invoicing, setInvoicing] = useState(defaultInvoicingState);
 
+  const normalizeInvoicing = (serverInvoicing = {}) => ({
+    ...defaultInvoicingState,
+    ...serverInvoicing,
+    tax_rate:
+      serverInvoicing.tax_rate ??
+      serverInvoicing.default_tax_rate ??
+      defaultInvoicingState.tax_rate,
+    tax_name: serverInvoicing.tax_name ?? defaultInvoicingState.tax_name,
+    tax_inclusive:
+      serverInvoicing.tax_inclusive ?? defaultInvoicingState.tax_inclusive,
+  });
+
   useEffect(() => {
     const loadSettings = async () => {
       setLoading(true);
@@ -58,7 +74,7 @@ export default function Settings() {
         const data = await apiRequest(`/settings`, { token });
         setProfile((prev) => ({ ...prev, ...data.profile }));
         setAccount({ ...defaultAccountState, ...(data.account || {}) });
-        setInvoicing({ ...defaultInvoicingState, ...(data.invoicing || {}) });
+        setInvoicing(normalizeInvoicing(data.invoicing || {}));
       } catch (err) {
         setFetchError(err.message || "Failed to load settings.");
       } finally {
@@ -82,8 +98,11 @@ export default function Settings() {
   };
 
   const handleInvoicingChange = (e) => {
-    const { name, value } = e.target;
-    setInvoicing((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setInvoicing((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleProfileSave = async () => {
@@ -165,10 +184,9 @@ export default function Settings() {
 
   const formattedInvoicingPayload = () => ({
     ...invoicing,
+    tax_rate: invoicing.tax_rate === "" ? 0 : Number(invoicing.tax_rate),
     default_tax_rate:
-      invoicing.default_tax_rate === ""
-        ? 0
-        : Number(invoicing.default_tax_rate),
+      invoicing.tax_rate === "" ? 0 : Number(invoicing.tax_rate),
     default_payment_terms_days:
       invoicing.default_payment_terms_days === ""
         ? 0
@@ -394,13 +412,13 @@ export default function Settings() {
         </SettingsCard>
 
         <SettingsCard
-          title="Invoicing"
-          description="Configure default invoicing preferences."
+          title="Billing & Tax Settings"
+          description="Configure your invoice defaults, currency, and tax preferences."
           onSave={handleInvoicingSave}
           saving={saving.invoicing}
           error={sectionErrors.invoicing}
           success={sectionSuccess.invoicing}
-          actionLabel="Save invoicing settings"
+          actionLabel="Save billing settings"
         >
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -414,12 +432,15 @@ export default function Settings() {
                   onChange={handleInvoicingChange}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/40"
                 >
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                  <option value="SAR">SAR</option>
-                  <option value="EGP">EGP</option>
+                  {currencyOptions.map((code) => (
+                    <option key={code} value={code}>
+                      {code}
+                    </option>
+                  ))}
                 </select>
+                <p className="mt-1 text-xs text-slate-500">
+                  All products and invoices must use the account currency.
+                </p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">
@@ -438,17 +459,48 @@ export default function Settings() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Tax label
+                </label>
+                <input
+                  type="text"
+                  name="tax_name"
+                  value={invoicing.tax_name || ""}
+                  onChange={handleInvoicingChange}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/40"
+                  placeholder="VAT / Sales Tax"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
                   Default tax rate (%)
                 </label>
                 <input
                   type="number"
-                  name="default_tax_rate"
-                  value={invoicing.default_tax_rate}
+                  name="tax_rate"
+                  value={invoicing.tax_rate}
                   onChange={handleInvoicingChange}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/40"
                   min="0"
+                  max="50"
                   step="0.01"
                 />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2">
+                <input
+                  type="checkbox"
+                  name="tax_inclusive"
+                  checked={!!invoicing.tax_inclusive}
+                  onChange={handleInvoicingChange}
+                  className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900/40"
+                />
+                <div>
+                  <p className="text-sm font-medium text-slate-900">Prices include tax</p>
+                  <p className="text-xs text-slate-600">
+                    Future-friendly toggle; current totals remain tax-exclusive.
+                  </p>
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">

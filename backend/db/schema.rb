@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_12_03_121000) do
+ActiveRecord::Schema[7.1].define(version: 2025_12_05_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -45,6 +45,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_03_121000) do
     t.string "invoice_prefix", default: "INV", null: false
     t.decimal "default_tax_rate", precision: 5, scale: 2, default: "0.0", null: false
     t.integer "default_payment_terms_days", default: 7, null: false
+    t.string "tax_name", default: "VAT"
+    t.boolean "tax_inclusive", default: false, null: false
   end
 
   create_table "clients", force: :cascade do |t|
@@ -79,7 +81,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_03_121000) do
     t.string "number"
     t.date "issue_date"
     t.date "due_date"
-    t.string "currency"
+    t.string "currency", default: "USD"
     t.string "status"
     t.decimal "subtotal", precision: 10, scale: 2
     t.decimal "tax_total", precision: 10, scale: 2
@@ -87,6 +89,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_03_121000) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "tax_rate", precision: 5, scale: 2, default: "0.0", null: false
+    t.string "tax_name", default: "VAT"
     t.index ["account_id"], name: "index_invoices_on_account_id"
     t.index ["client_id"], name: "index_invoices_on_client_id"
   end

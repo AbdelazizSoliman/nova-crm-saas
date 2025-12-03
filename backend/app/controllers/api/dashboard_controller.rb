@@ -79,6 +79,7 @@ module Api
           clients_count: account.clients.count,
           invoices_count: ranged_invoices.count,
           average_invoice_value: revenue_scope.average(:total).to_f,
+          currency: account.default_currency,
           active_subscription_plan: account.current_plan&.code || account.current_plan&.name,
           subscription_status: account.current_subscription&.status
         },

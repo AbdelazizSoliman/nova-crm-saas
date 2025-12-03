@@ -47,6 +47,12 @@ export default function Products() {
   const [typeFilter, setTypeFilter] = useState("");
   const [onlyActive, setOnlyActive] = useState(true);
 
+  const [billingSettings, setBillingSettings] = useState({
+    currency: "USD",
+    tax_rate: 0,
+    tax_name: "VAT",
+  });
+
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState(emptyProduct);
@@ -79,8 +85,23 @@ export default function Products() {
     }
   };
 
+  const fetchBillingSettings = async () => {
+    try {
+      const data = await apiRequest(`/settings`, { token });
+      const invoicing = data.invoicing || {};
+      setBillingSettings({
+        currency: invoicing.default_currency || "USD",
+        tax_rate: invoicing.tax_rate ?? invoicing.default_tax_rate ?? 0,
+        tax_name: invoicing.tax_name || "VAT",
+      });
+    } catch (err) {
+      console.error("Failed to load billing settings", err);
+    }
+  };
+
   useEffect(() => {
     if (!token) return;
+    fetchBillingSettings();
     fetchProducts(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
@@ -90,9 +111,16 @@ export default function Products() {
     fetchProducts(1);
   };
 
+  const buildEmptyProduct = () => ({
+    ...emptyProduct,
+    currency: billingSettings.currency || emptyProduct.currency,
+    default_tax_rate:
+      billingSettings.tax_rate ?? emptyProduct.default_tax_rate,
+  });
+
   const openCreateForm = () => {
     setEditingProduct(null);
-    setFormData(emptyProduct);
+    setFormData(buildEmptyProduct());
     setFormError("");
     setShowForm(true);
   };
@@ -140,7 +168,7 @@ export default function Products() {
       }
 
       setShowForm(false);
-      setFormData(emptyProduct);
+      setFormData(buildEmptyProduct());
       setEditingProduct(null);
       fetchProducts(meta.current_page || 1);
     } catch (err) {
@@ -356,7 +384,9 @@ export default function Products() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Unit price *</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                    Unit price ({billingSettings.currency}) *
+                  </label>
                   <input
                     type="number"
                     step="0.01"
@@ -366,9 +396,14 @@ export default function Products() {
                     required
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
                   />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Amounts are shown in your account currency.
+                  </p>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Default tax rate %</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                    Default {billingSettings.tax_name || "tax"} rate %
+                  </label>
                   <input
                     type="number"
                     step="0.01"
@@ -376,6 +411,8 @@ export default function Products() {
                     value={formData.default_tax_rate}
                     onChange={handleFormChange}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+                    min="0"
+                    max="50"
                   />
                 </div>
                 <div>
@@ -392,6 +429,9 @@ export default function Products() {
                       </option>
                     ))}
                   </select>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Products must match your account currency ({billingSettings.currency}).
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">Product type</label>

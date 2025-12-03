@@ -90,6 +90,9 @@ module Api
         default_currency
         invoice_prefix
         default_tax_rate
+        tax_rate
+        tax_name
+        tax_inclusive
         default_payment_terms_days
       ])
     end
@@ -110,7 +113,15 @@ module Api
     end
 
     def invoicing_params
-      params.fetch(:invoicing, {}).permit(:default_currency, :invoice_prefix, :default_tax_rate, :default_payment_terms_days)
+      params.fetch(:invoicing, {}).permit(
+        :default_currency,
+        :invoice_prefix,
+        :default_tax_rate,
+        :default_payment_terms_days,
+        :tax_rate,
+        :tax_name,
+        :tax_inclusive
+      )
     end
   end
 end
