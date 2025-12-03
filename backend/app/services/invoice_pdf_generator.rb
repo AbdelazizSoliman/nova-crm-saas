@@ -1,5 +1,6 @@
 require "prawn"
 require "prawn/table"
+require "invoice_pdf/classic_template"
 
 class InvoicePdfGenerator
   include ActiveSupport::NumberHelper
@@ -20,6 +21,8 @@ class InvoicePdfGenerator
   end
 
   def render
+    return classic_template.render if template == "classic"
+
     Prawn::Document.new(page_size: "A4", margin: 36) do |pdf|
       apply_footer(pdf)
       send(TEMPLATE_METHODS[template], pdf)
@@ -63,6 +66,10 @@ class InvoicePdfGenerator
 
   def brand_color
     branding[:brand_color]
+  end
+
+  def classic_template
+    InvoicePdf::ClassicTemplate.new(invoice, account: account, branding_settings: branding)
   end
 
   def soft_brand_color

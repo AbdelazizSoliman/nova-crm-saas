@@ -1,6 +1,6 @@
 class Account < ApplicationRecord
   VALID_CURRENCIES = %w[USD EUR GBP SAR EGP].freeze
-  INVOICE_TEMPLATES = %w[template_a template_b template_c default].freeze
+  INVOICE_TEMPLATES = %w[template_a template_b template_c classic default].freeze
 
   has_one_attached :invoice_logo
 
