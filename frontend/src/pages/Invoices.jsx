@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../api/client";
+import AddPaymentModal from "../components/AddPaymentModal";
 
 const statusBadges = {
   draft: "bg-slate-100 text-slate-700", // gray
@@ -46,6 +48,7 @@ function formatMoney(amount, currency = "USD") {
 
 export default function Invoices() {
   const { token } = useAuth();
+  const { invoiceId } = useParams();
 
   const [invoices, setInvoices] = useState([]);
   const [meta, setMeta] = useState({
@@ -76,8 +79,7 @@ export default function Invoices() {
   const [viewError, setViewError] = useState("");
   const [viewLoading, setViewLoading] = useState(false);
 
-  const [paymentForm, setPaymentForm] = useState(emptyPayment);
-  const [paymentSaving, setPaymentSaving] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const pages = useMemo(() => {
     const total = meta?.total_pages || 1;
@@ -318,7 +320,6 @@ export default function Invoices() {
       setViewError("");
       const data = await apiRequest(`/invoices/${invoiceId}`, { token });
       setViewInvoice(data);
-      setPaymentForm(emptyPayment);
     } catch (err) {
       setViewError(err.message || "Failed to load invoice");
     } finally {
@@ -327,10 +328,18 @@ export default function Invoices() {
   };
 
   const openView = (invoiceId) => {
+    setShowPaymentModal(false);
     setViewInvoice({ id: invoiceId });
     setViewLoading(true);
     fetchInvoiceDetail(invoiceId);
   };
+
+  useEffect(() => {
+    if (invoiceId && token) {
+      openView(invoiceId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoiceId, token]);
 
   const handleDuplicate = async (invoiceId) => {
     try {
@@ -346,24 +355,23 @@ export default function Invoices() {
     }
   };
 
-  const handleAddPayment = async (invoiceId) => {
-    setPaymentSaving(true);
-    setViewError("");
+  const handlePaymentCreated = async (invoiceId) => {
+    await fetchInvoiceDetail(invoiceId);
+    fetchInvoices(meta.current_page || 1);
+    setNotice("Payment added successfully.");
+  };
+
+  const handleDeletePayment = async (paymentId, invoiceId) => {
+    if (!window.confirm("Delete this payment?")) return;
+
     try {
-      await apiRequest(`/invoices/${invoiceId}/payments`, {
-        method: "POST",
-        token,
-        body: {
-          payment: { ...paymentForm, amount: Number(paymentForm.amount) || 0 },
-        },
-      });
+      setViewError("");
+      await apiRequest(`/payments/${paymentId}`, { method: "DELETE", token });
       await fetchInvoiceDetail(invoiceId);
       fetchInvoices(meta.current_page || 1);
-      setNotice("Payment added successfully.");
+      setNotice("Payment deleted.");
     } catch (err) {
-      setViewError(err.message || "Failed to add payment");
-    } finally {
-      setPaymentSaving(false);
+      setViewError(err.message || "Failed to delete payment");
     }
   };
 
@@ -957,7 +965,10 @@ export default function Invoices() {
                   Edit
                 </button>
                 <button
-                  onClick={() => setViewInvoice(null)}
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    setViewInvoice(null);
+                  }}
                   className="text-sm text-slate-500 hover:text-slate-800"
                 >
                   ✕
@@ -1050,12 +1061,18 @@ export default function Invoices() {
 
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-slate-900">
-                      Payments
-                    </h3>
-                    <span className="text-xs text-slate-600">
-                      {(viewInvoice.payments || []).length} payment(s)
-                    </span>
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">Payments</h3>
+                      <p className="text-xs text-slate-600">
+                        {(viewInvoice.payments || []).length} payment(s) recorded
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowPaymentModal(true)}
+                      className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                    >
+                      + Add Payment
+                    </button>
                   </div>
                   <div className="mt-3 space-y-3">
                     {(viewInvoice.payments || []).map((payment) => (
@@ -1063,114 +1080,43 @@ export default function Invoices() {
                         key={payment.id}
                         className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
                       >
-                        <div className="flex items-center justify-between">
-                          <p className="font-semibold text-slate-900">
-                            {formatMoney(payment.amount, viewInvoice.currency)}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {payment.paid_at}
-                          </p>
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-slate-900">
+                              {formatMoney(payment.amount, viewInvoice.currency)}
+                            </p>
+                            <p className="text-xs text-slate-500">{payment.paid_at}</p>
+                            <p className="text-xs text-slate-600">Method: {payment.method}</p>
+                            {payment.note && (
+                              <p className="text-xs text-slate-500">{payment.note}</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleDeletePayment(payment.id, viewInvoice.id)}
+                            className="text-xs font-medium text-red-600 hover:underline"
+                          >
+                            Delete
+                          </button>
                         </div>
-                        <p className="text-xs text-slate-600">
-                          Method: {payment.method}
-                        </p>
-                        {payment.note && (
-                          <p className="text-xs text-slate-500">
-                            {payment.note}
-                          </p>
-                        )}
                       </div>
                     ))}
                     {(viewInvoice.payments || []).length === 0 && (
-                      <p className="text-xs text-slate-600">
-                        No payments recorded.
-                      </p>
+                      <p className="text-xs text-slate-600">No payments recorded.</p>
                     )}
-                  </div>
-
-                  <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
-                    <h4 className="text-xs font-semibold uppercase text-slate-600">
-                      Add payment
-                    </h4>
-                    <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-4">
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
-                          Amount
-                        </label>
-                        <input
-                          type="number"
-                          value={paymentForm.amount}
-                          onChange={(e) =>
-                            setPaymentForm((prev) => ({
-                              ...prev,
-                              amount: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
-                          Paid at
-                        </label>
-                        <input
-                          type="datetime-local"
-                          value={paymentForm.paid_at}
-                          onChange={(e) =>
-                            setPaymentForm((prev) => ({
-                              ...prev,
-                              paid_at: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
-                          Method
-                        </label>
-                        <input
-                          value={paymentForm.method}
-                          onChange={(e) =>
-                            setPaymentForm((prev) => ({
-                              ...prev,
-                              method: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">
-                          Note
-                        </label>
-                        <input
-                          value={paymentForm.note}
-                          onChange={(e) =>
-                            setPaymentForm((prev) => ({
-                              ...prev,
-                              note: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-3 flex justify-end">
-                      <button
-                        onClick={() => handleAddPayment(viewInvoice.id)}
-                        disabled={paymentSaving}
-                        className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
-                      >
-                        {paymentSaving ? "Saving..." : "Add payment"}
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
             )}
           </div>
         </div>
+      )}
+
+      {showPaymentModal && viewInvoice?.id && (
+        <AddPaymentModal
+          invoiceId={viewInvoice.id}
+          onClose={() => setShowPaymentModal(false)}
+          onSuccess={() => handlePaymentCreated(viewInvoice.id)}
+        />
       )}
     </div>
   );

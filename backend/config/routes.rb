@@ -19,11 +19,13 @@ Rails.application.routes.draw do
 
     resources :clients
 
+    resources :payments, only: %i[index destroy]
+
     resources :invoices do
       member do
         post :duplicate
       end
-      
+
       resources :payments, only: %i[index create]
     end
   end
