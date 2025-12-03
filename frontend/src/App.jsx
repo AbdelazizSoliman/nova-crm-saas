@@ -10,6 +10,7 @@ import Payments from "./pages/Payments";
 import Products from "./pages/Products";
 import ActivityLog from "./pages/ActivityLog";
 import Billing from "./pages/Billing";
+import InvoiceBranding from "./pages/InvoiceBranding";
 export default function App() {
   return (
     <Routes>
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="activity-log" element={<ActivityLog />} />
         <Route path="billing" element={<Billing />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="settings/invoice-template" element={<InvoiceBranding />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
