@@ -14,7 +14,6 @@ const statusBadges = {
 };
 
 const statusOptions = ["draft", "sent", "paid", "overdue", "cancelled"];
-const currencyOptions = ["USD", "EUR", "SAR"];
 const methodOptions = [
   { value: "cash", label: "Cash" },
   { value: "card", label: "Card" },
@@ -32,17 +31,19 @@ const paymentMethodLabels = {
 const emptyItem = { description: "", quantity: 1, unit_price: 0, tax_rate: 0 };
 const emptyPayment = { amount: "", paid_at: "", method: "", note: "" };
 
-const createEmptyInvoice = () => ({
+const createEmptyInvoice = (defaults = {}) => ({
   client_id: "",
   invoice: {
     number: "",
     issue_date: "",
     due_date: "",
-    currency: "USD",
+    currency: defaults.currency || "USD",
+    tax_rate: defaults.tax_rate ?? 0,
+    tax_name: defaults.tax_name || "VAT",
     status: "draft",
     notes: "",
   },
-  items: [{ ...emptyItem }],
+  items: [{ ...emptyItem, tax_rate: defaults.tax_rate ?? 0 }],
   payments: [],
 });
 
@@ -89,9 +90,16 @@ export default function Invoices() {
   const [clients, setClients] = useState([]);
   const [clientsLoading, setClientsLoading] = useState(false);
 
+  const [billingSettings, setBillingSettings] = useState({
+    currency: "USD",
+    tax_rate: 0,
+    tax_name: "VAT",
+    tax_inclusive: false,
+  });
+
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState(createEmptyInvoice());
+  const [formData, setFormData] = useState(createEmptyInvoice(billingSettings));
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
@@ -142,6 +150,21 @@ export default function Invoices() {
     }
   };
 
+  const fetchBillingSettings = async () => {
+    try {
+      const data = await apiRequest(`/settings`, { token });
+      const invoicing = data.invoicing || {};
+      setBillingSettings({
+        currency: invoicing.default_currency || "USD",
+        tax_rate: invoicing.tax_rate ?? invoicing.default_tax_rate ?? 0,
+        tax_name: invoicing.tax_name || "VAT",
+        tax_inclusive: invoicing.tax_inclusive ?? false,
+      });
+    } catch (err) {
+      console.error("Failed to load billing settings", err);
+    }
+  };
+
   const fetchClients = async () => {
     try {
       setClientsLoading(true);
@@ -159,6 +182,7 @@ export default function Invoices() {
 
   useEffect(() => {
     if (!token) return;
+    fetchBillingSettings();
     fetchInvoices(1);
     fetchClients();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -170,7 +194,7 @@ export default function Invoices() {
   };
 
   const openCreateForm = () => {
-    const emptyInvoice = createEmptyInvoice();
+    const emptyInvoice = createEmptyInvoice(billingSettings);
     setFormData(emptyInvoice);
     initializeProductLookups(emptyInvoice.items);
     setEditingId(null);
@@ -185,7 +209,10 @@ export default function Invoices() {
       number: invoice.number || "",
       issue_date: invoice.issue_date || "",
       due_date: invoice.due_date || "",
-      currency: invoice.currency || "USD",
+      currency: invoice.currency || billingSettings.currency || "USD",
+      tax_rate:
+        invoice.tax_rate ?? invoice.invoice_items?.[0]?.tax_rate ?? billingSettings.tax_rate,
+      tax_name: invoice.tax_name || billingSettings.tax_name || "VAT",
       status: invoice.status || "draft",
       notes: invoice.notes || "",
     },
@@ -194,7 +221,7 @@ export default function Invoices() {
       description: item.description || "",
       quantity: item.quantity || 1,
       unit_price: item.unit_price || 0,
-      tax_rate: item.tax_rate || 0,
+      tax_rate: item.tax_rate ?? invoice.tax_rate ?? billingSettings.tax_rate ?? 0,
     })),
     payments: (invoice.payments || []).map((payment) => ({
       id: payment.id,
@@ -211,7 +238,7 @@ export default function Invoices() {
     setNotice("");
     setShowForm(true);
     setEditingId(invoiceId);
-    const placeholder = createEmptyInvoice();
+    const placeholder = createEmptyInvoice(billingSettings);
     setFormData(placeholder);
     initializeProductLookups(placeholder.items);
 
@@ -229,6 +256,19 @@ export default function Invoices() {
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "tax_rate") {
+      setFormData((prev) => ({
+        ...prev,
+        invoice: {
+          ...prev.invoice,
+          [name]: value,
+        },
+        items: prev.items.map((item) => ({ ...item, tax_rate: value })),
+      }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       invoice: {
@@ -280,7 +320,11 @@ export default function Invoices() {
     const description = product.description || product.name || "";
     handleItemChange(index, "description", description);
     handleItemChange(index, "unit_price", product.unit_price || 0);
-    handleItemChange(index, "tax_rate", product.default_tax_rate ?? 0);
+    handleItemChange(
+      index,
+      "tax_rate",
+      formData.invoice.tax_rate ?? billingSettings.tax_rate ?? product.default_tax_rate ?? 0
+    );
 
     setProductSearches((prev) => {
       const next = [...prev];
@@ -347,6 +391,8 @@ export default function Invoices() {
         issue_date: formData.invoice.issue_date,
         due_date: formData.invoice.due_date,
         currency: formData.invoice.currency,
+        tax_rate: Number(formData.invoice.tax_rate) || 0,
+        tax_name: formData.invoice.tax_name || billingSettings.tax_name,
         status: formData.invoice.status,
         notes: formData.invoice.notes,
       },
@@ -354,7 +400,7 @@ export default function Invoices() {
         description: item.description,
         quantity: Number(item.quantity) || 0,
         unit_price: Number(item.unit_price) || 0,
-        tax_rate: Number(item.tax_rate) || 0,
+        tax_rate: Number(formData.invoice.tax_rate) || 0,
       })),
       payments: (formData.payments || []).map((payment) => ({
         amount: Number(payment.amount) || 0,
@@ -382,7 +428,7 @@ export default function Invoices() {
     }
 
     setShowForm(false);
-    const emptyInvoice = createEmptyInvoice();
+    const emptyInvoice = createEmptyInvoice(billingSettings);
     setFormData(emptyInvoice);
     initializeProductLookups(emptyInvoice.items);
     setEditingId(null);
@@ -432,6 +478,13 @@ export default function Invoices() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoiceId, token]);
+
+  useEffect(() => {
+    if (editingId || showForm) return;
+
+    setFormData(createEmptyInvoice(billingSettings));
+    initializeProductLookups([{ ...emptyItem }]);
+  }, [billingSettings, editingId, showForm]);
 
   const handleDownloadPdf = async (invoice) => {
     if (!invoice?.id) return;
@@ -819,23 +872,48 @@ export default function Invoices() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">
                     Currency
                   </label>
-                  <select
+                  <input
                     name="currency"
                     value={formData.invoice.currency}
                     onChange={handleFormChange}
+                    disabled
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Invoices use your account currency ({billingSettings.currency}).
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Tax name</label>
+                  <input
+                    type="text"
+                    name="tax_name"
+                    value={formData.invoice.tax_name || ""}
+                    onChange={handleFormChange}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
-                  >
-                    {currencyOptions.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="VAT"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Tax rate (%)</label>
+                  <input
+                    type="number"
+                    name="tax_rate"
+                    value={formData.invoice.tax_rate}
+                    onChange={handleFormChange}
+                    min="0"
+                    max="50"
+                    step="0.01"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Default {billingSettings.tax_name || "tax"}: {billingSettings.tax_rate}%
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">
@@ -854,13 +932,16 @@ export default function Invoices() {
                     ))}
                   </select>
                 </div>
-                <div className="md:col-span-1">
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-1">
+                <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">
                     Notes
                   </label>
                   <textarea
                     name="notes"
-                    rows={1}
+                    rows={2}
                     value={formData.invoice.notes}
                     onChange={handleFormChange}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
@@ -935,7 +1016,7 @@ export default function Invoices() {
                           )}
                         </div>
                         <p className="mt-1 text-[11px] text-slate-500">
-                          Selecting a product will auto-fill description, price, and tax.
+                          Selecting a product will auto-fill its description and price.
                         </p>
                       </div>
                       <div className="md:col-span-4">
@@ -986,16 +1067,17 @@ export default function Invoices() {
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-600 mb-1">
-                          Tax %
+                          Tax % (invoice)
                         </label>
                         <input
                           type="number"
-                          value={item.tax_rate}
-                          onChange={(e) =>
-                            handleItemChange(index, "tax_rate", e.target.value)
-                          }
-                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+                          value={formData.invoice.tax_rate}
+                          readOnly
+                          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700"
                         />
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          Tax is controlled at the invoice level.
+                        </p>
                       </div>
                       <div className="flex items-center md:col-span-1 md:justify-end">
                         <button
@@ -1208,9 +1290,9 @@ export default function Invoices() {
                       {formatMoney(viewInvoice.total, viewInvoice.currency)}
                     </p>
                     <p className="text-xs text-slate-600">
-                      Subtotal{" "}
-                      {formatMoney(viewInvoice.subtotal, viewInvoice.currency)}{" "}
-                      · Tax{" "}
+                      Subtotal {formatMoney(viewInvoice.subtotal, viewInvoice.currency)} ·
+                      {" "}
+                      {viewInvoice.tax_name || "Tax"} ({Number(viewInvoice.tax_rate) || 0}%):{" "}
                       {formatMoney(viewInvoice.tax_total, viewInvoice.currency)}
                     </p>
                   </div>
@@ -1223,7 +1305,9 @@ export default function Invoices() {
                         <th className="px-4 py-2">Description</th>
                         <th className="px-4 py-2">Qty</th>
                         <th className="px-4 py-2">Unit price</th>
-                        <th className="px-4 py-2">Tax %</th>
+                        <th className="px-4 py-2">
+                          {viewInvoice.tax_name || "Tax"} %
+                        </th>
                         <th className="px-4 py-2 text-right">Line total</th>
                       </tr>
                     </thead>
@@ -1240,7 +1324,7 @@ export default function Invoices() {
                             {formatMoney(item.unit_price, viewInvoice.currency)}
                           </td>
                           <td className="px-4 py-2 text-slate-700">
-                            {item.tax_rate}%
+                            {Number(viewInvoice.tax_rate ?? billingSettings.tax_rate ?? 0)}%
                           </td>
                           <td className="px-4 py-2 text-right font-medium text-slate-900">
                             {formatMoney(item.line_total, viewInvoice.currency)}

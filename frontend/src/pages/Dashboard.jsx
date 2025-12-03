@@ -101,10 +101,12 @@ export default function Dashboard() {
     return () => controller.abort();
   }, [token, logout, navigate, range]);
 
+  const currencyCode = summary?.metrics?.currency || "USD";
+
   const formatMoney = (v) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: currencyCode,
       maximumFractionDigits: 0,
     }).format(Number(v || 0));
 
@@ -177,6 +179,9 @@ export default function Dashboard() {
           <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
           <p className="text-sm text-slate-500 mt-1">
             A real-time snapshot of revenue, invoices, and customer momentum.
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            All monetary values shown in {currencyCode}.
           </p>
         </div>
         <div className="flex items-center gap-3">

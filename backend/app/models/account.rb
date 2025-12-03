@@ -10,9 +10,13 @@ class Account < ApplicationRecord
   has_many :subscriptions, dependent: :destroy
   has_many :plans, through: :subscriptions
 
+  alias_attribute :tax_rate, :default_tax_rate
+
   validates :default_currency, inclusion: { in: VALID_CURRENCIES }
   validates :invoice_prefix, presence: true
-  validates :default_tax_rate, numericality: { greater_than_or_equal_to: 0 }
+  validates :default_tax_rate, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 50 }
+  validates :tax_name, length: { maximum: 50 }, allow_blank: true
+  validates :tax_inclusive, inclusion: { in: [true, false] }
   validates :default_payment_terms_days, numericality: { greater_than: 0, only_integer: true }
 
   def current_subscription
