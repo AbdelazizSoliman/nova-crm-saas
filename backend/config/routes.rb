@@ -18,6 +18,8 @@ Rails.application.routes.draw do
     put "settings/account", to: "settings#update_account"
     get "settings/invoice", to: "settings#invoice_branding"
     patch "settings/invoice", to: "settings#update_invoice_branding"
+    get "settings/branding", to: "settings#branding"
+    patch "settings/branding", to: "settings#update_branding"
 
     resources :activity_logs, only: %i[index]
 
@@ -27,7 +29,9 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :clients
+    resources :clients do
+      resources :attachments, only: %i[index create destroy], controller: "client_attachments"
+    end
 
     resources :payments, only: %i[index destroy]
 
@@ -43,6 +47,7 @@ Rails.application.routes.draw do
       end
 
       resources :payments, only: %i[index create]
+      resources :attachments, only: %i[index create destroy], controller: "invoice_attachments"
     end
 
     resources :plans, only: %i[index]

@@ -39,8 +39,8 @@ const navItems = [
     shouldDisplay: (permissions) => permissions.canManageTeam,
   },
   {
-    to: "/settings/invoice-template",
-    label: "Invoice Templates",
+    to: "/settings/branding",
+    label: "Branding",
     icon: SwatchIcon,
     shouldDisplay: (permissions) => permissions.canViewSettings,
   },

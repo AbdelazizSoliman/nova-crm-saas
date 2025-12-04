@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL, apiRequest } from "../api/client";
 import AddPaymentModal from "../components/AddPaymentModal";
+import AttachmentsSection from "../components/AttachmentsSection";
 import SendInvoiceEmailModal from "../components/SendInvoiceEmailModal";
 import { usePermissions } from "../utils/permissions";
 
@@ -1360,6 +1361,18 @@ export default function Invoices() {
                     </tbody>
                   </table>
                 </div>
+
+                {viewInvoice?.id && (
+                  <AttachmentsSection
+                    title="Attachments"
+                    fetchPath={`/invoices/${viewInvoice.id}/attachments`}
+                    uploadPath={`/invoices/${viewInvoice.id}/attachments`}
+                    deletePath={`/invoices/${viewInvoice.id}/attachments`}
+                    canManage={canManageInvoices}
+                    emptyMessage="No attachments added to this invoice."
+                    refreshKey={viewInvoice.id}
+                  />
+                )}
 
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between">

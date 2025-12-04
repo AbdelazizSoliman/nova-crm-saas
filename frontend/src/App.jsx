@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
 import AppLayout from "./layouts/AppLayout";
 import Clients from "./pages/Clients";
+import ClientDetails from "./pages/ClientDetails";
 import Invoices from "./pages/Invoices";
 import Settings from "./pages/Settings";
 import Payments from "./pages/Payments";
@@ -30,6 +31,7 @@ export default function App() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="clients" element={<Clients />} />
+        <Route path="clients/:clientId" element={<ClientDetails />} />
         <Route path="products" element={<Products />} />
         <Route path="invoices" element={<Invoices />} />
         <Route path="invoices/:invoiceId" element={<Invoices />} />
@@ -39,7 +41,7 @@ export default function App() {
         <Route path="billing" element={<Billing />} />
         <Route path="settings" element={<Settings />} />
         <Route path="settings/team" element={<Team />} />
-        <Route path="settings/invoice-template" element={<InvoiceBranding />} />
+        <Route path="settings/branding" element={<InvoiceBranding />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
