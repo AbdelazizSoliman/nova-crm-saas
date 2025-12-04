@@ -243,8 +243,5 @@ module Api
       }
     end
 
-    def record_invalid(exception)
-      render json: { errors: exception.record.errors.full_messages.presence || [exception.message] }, status: :unprocessable_entity
-    end
   end
 end
