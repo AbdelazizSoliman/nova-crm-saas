@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../api/client";
 import { usePermissions } from "../utils/permissions";
+import Alert from "../components/Alert";
 
 const emptyForm = {
   name: "",
@@ -188,11 +189,7 @@ export default function Clients() {
       </form>
 
       {/* Error */}
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      {error && <Alert type="danger" message={error} />}
 
       {/* Table */}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">

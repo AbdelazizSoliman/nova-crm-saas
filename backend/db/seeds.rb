@@ -42,7 +42,7 @@ account = Account.create!(
 owner = account.users.create!(
   first_name: "Demo",
   last_name: "Owner",
-  email: "demo@example.com",
+  email: ENV.fetch("DEMO_USER_EMAIL", "demo@nova-crm.test"),
   role: "owner",
   password: "password",
   password_confirmation: "password"
@@ -67,4 +67,4 @@ account.subscriptions.create!(
   )
 end
 
-puts "Seed done. Login with: demo@example.com / password"
+puts "Seed done. Login with: #{owner.email} / password"

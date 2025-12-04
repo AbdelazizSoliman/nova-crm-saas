@@ -70,10 +70,25 @@ class ApplicationController < ActionController::API
     ActiveModel::Type::Boolean.new.cast(ENV["DEMO_MODE"])
   end
 
+  def demo_user?
+    demo_mode? && current_user&.email&.casecmp(ENV.fetch("DEMO_USER_EMAIL", "demo@nova-crm.test"))&.zero?
+  end
+
+  def render_demo_mode_error
+    render json: { error: "Action is disabled in demo mode." }, status: :forbidden
+  end
+
+  def prevent_demo_changes!
+    return unless demo_user?
+
+    render_demo_mode_error
+    throw(:abort)
+  end
+
   def ensure_uploads_allowed!
     return unless demo_mode?
 
-    render_forbidden("File uploads are disabled in demo mode")
+    render_demo_mode_error
     throw(:abort)
   end
 end
