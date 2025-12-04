@@ -13,18 +13,6 @@ Rails.application.routes.draw do
 
     get "dashboard/summary", to: "dashboard#summary"
 
-    namespace :import do
-      post :clients,  to: "imports#clients"
-      post :products, to: "imports#products"
-    end
-
-    namespace :export do
-      get "clients",  to: "exports#clients",  defaults: { format: :csv }
-      get "products", to: "exports#products", defaults: { format: :csv }
-      get "invoices", to: "exports#invoices", defaults: { format: :csv }
-      get "invoices_zip", to: "exports#invoices_zip"
-    end
-
     get "settings", to: "settings#show"
     put "settings/profile", to: "settings#update_profile"
     put "settings/account", to: "settings#update_account"

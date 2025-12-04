@@ -14,7 +14,6 @@ import Billing from "./pages/Billing";
 import InvoiceBranding from "./pages/InvoiceBranding";
 import Team from "./pages/Team";
 import Notifications from "./pages/Notifications";
-import ImportExport from "./pages/ImportExport";
 export default function App() {
   return (
     <Routes>
@@ -40,7 +39,6 @@ export default function App() {
         <Route path="notifications" element={<Notifications />} />
         <Route path="activity-log" element={<ActivityLog />} />
         <Route path="billing" element={<Billing />} />
-        <Route path="settings/import-export" element={<ImportExport />} />
         <Route path="settings" element={<Settings />} />
         <Route path="settings/team" element={<Team />} />
         <Route path="settings/branding" element={<InvoiceBranding />} />
