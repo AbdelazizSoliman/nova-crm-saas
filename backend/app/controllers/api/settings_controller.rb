@@ -5,6 +5,8 @@ module Api
     rescue_from ActiveRecord::RecordInvalid, with: :record_invalid
     before_action :authorize_settings_view!, only: %i[show invoice_branding branding]
     before_action :authorize_manage_settings!, only: %i[update_invoice_branding update_branding update_account]
+    before_action :prevent_demo_changes!, only: %i[update_profile update_account update_invoice_branding update_branding]
+    before_action :ensure_uploads_allowed!, only: %i[update_invoice_branding update_branding]
 
     def show
       render json: serialized_settings

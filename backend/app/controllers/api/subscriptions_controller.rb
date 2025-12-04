@@ -3,6 +3,7 @@ module Api
     before_action :set_current_subscription, only: %i[show update]
     before_action :authorize_billing_view!, only: %i[show]
     before_action :authorize_billing_management!, only: %i[create update]
+    before_action :prevent_demo_changes!, only: %i[create update]
 
     def show
       render json: subscription_response(@subscription)

@@ -1,53 +1,50 @@
 import { useAuth } from "../context/AuthContext";
 
-export const API_BASE_URL = "http://localhost:3000/api";
+export const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
-export async function apiRequest(path, { method = "GET", token, body } = {}) {
-  const headers = {
-    "Content-Type": "application/json",
-  };
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
+export class ApiError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
   }
+}
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+function buildHeaders(token, hasBody = true) {
+  const headers = {};
+  if (hasBody) headers["Content-Type"] = "application/json";
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+}
 
+async function handleJsonResponse(res) {
   const data = await res.json().catch(() => ({}));
-
   if (!res.ok) {
     const message = data.error || data.errors?.join(", ") || "Request failed";
-    throw new Error(message);
+    throw new ApiError(message, res.status);
   }
-
   return data;
 }
 
-export async function apiFormRequest(path, { method = "POST", token, body } = {}) {
-  const headers = {};
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
+export async function apiRequest(path, { method = "GET", token, body } = {}) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method,
-    headers,
+    headers: buildHeaders(token, true),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  return handleJsonResponse(res);
+}
+
+export async function apiFormRequest(path, { method = "POST", token, body } = {}) {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method,
+    headers: buildHeaders(token, false),
     body,
   });
 
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok) {
-    const message = data.error || data.errors?.join(", ") || "Request failed";
-    throw new Error(message);
-  }
-
-  return data;
+  return handleJsonResponse(res);
 }
 
 export async function apiRequestBlob(path, { method = "GET", token, body } = {}) {
@@ -72,7 +69,7 @@ export async function apiRequestBlob(path, { method = "GET", token, body } = {})
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Request failed");
+    throw new ApiError(text || "Request failed", res.status);
   }
 
   return res.blob();

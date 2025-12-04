@@ -3,6 +3,7 @@ module Api
     before_action :authorize_team_view!
     before_action :authorize_team_management!, only: %i[invite update destroy]
     before_action :set_user, only: %i[update destroy]
+    before_action :prevent_demo_changes!, only: %i[invite update destroy]
 
     def index
       users = current_account.users.order(created_at: :asc)
