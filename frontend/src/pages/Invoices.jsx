@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL, apiRequest } from "../api/client";
 import AddPaymentModal from "../components/AddPaymentModal";
 import SendInvoiceEmailModal from "../components/SendInvoiceEmailModal";
+import { usePermissions } from "../utils/permissions";
 
 const statusBadges = {
   draft: "bg-slate-100 text-slate-700", // gray
@@ -71,6 +72,7 @@ const formatDateTime = (value) => {
 export default function Invoices() {
   const { token } = useAuth();
   const { invoiceId } = useParams();
+  const { canManageInvoices } = usePermissions();
 
   const [invoices, setInvoices] = useState([]);
   const [meta, setMeta] = useState({
@@ -194,6 +196,7 @@ export default function Invoices() {
   };
 
   const openCreateForm = () => {
+    if (!canManageInvoices) return;
     const emptyInvoice = createEmptyInvoice(billingSettings);
     setFormData(emptyInvoice);
     initializeProductLookups(emptyInvoice.items);
@@ -233,6 +236,7 @@ export default function Invoices() {
   });
 
   const openEditForm = async (invoiceId) => {
+    if (!canManageInvoices) return;
     setFormLoading(true);
     setFormError("");
     setNotice("");
@@ -380,6 +384,7 @@ export default function Invoices() {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (!canManageInvoices) return;
     setSaving(true);
     setFormError("");
     setNotice("");
@@ -441,6 +446,7 @@ export default function Invoices() {
   };
 
   const handleDelete = async (invoice) => {
+    if (!canManageInvoices) return;
     if (!window.confirm(`Delete invoice "${invoice.number}"?`)) return;
     try {
       setError("");
@@ -566,12 +572,14 @@ export default function Invoices() {
             Manage your invoices, status, and payments.
           </p>
         </div>
-        <button
-          onClick={openCreateForm}
-          className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-        >
-          + New invoice
-        </button>
+        {canManageInvoices && (
+          <button
+            onClick={openCreateForm}
+            className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            + New invoice
+          </button>
+        )}
       </div>
 
       <form
@@ -722,24 +730,28 @@ export default function Invoices() {
                     >
                       View
                     </button>
-                    <button
-                      onClick={() => openEditForm(invoice.id)}
-                      className="text-xs font-medium text-slate-700 hover:underline"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDuplicate(invoice.id)}
-                      className="text-xs font-medium text-slate-700 hover:underline"
-                    >
-                      Duplicate
-                    </button>
-                    <button
-                      onClick={() => handleDelete(invoice)}
-                      className="text-xs font-medium text-red-600 hover:underline"
-                    >
-                      Delete
-                    </button>
+                    {canManageInvoices && (
+                      <>
+                        <button
+                          onClick={() => openEditForm(invoice.id)}
+                          className="text-xs font-medium text-slate-700 hover:underline"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDuplicate(invoice.id)}
+                          className="text-xs font-medium text-slate-700 hover:underline"
+                        >
+                          Duplicate
+                        </button>
+                        <button
+                          onClick={() => handleDelete(invoice)}
+                          className="text-xs font-medium text-red-600 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))
@@ -1197,7 +1209,7 @@ export default function Invoices() {
                 </button>
                 <button
                   type="submit"
-                  disabled={saving || formLoading}
+                  disabled={saving || formLoading || !canManageInvoices}
                   className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
                 >
                   {saving ? "Saving..." : "Save invoice"}
@@ -1222,31 +1234,35 @@ export default function Invoices() {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setShowSendEmailModal(true)}
-                  disabled={viewLoading}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                >
-                  Send by Email
-                </button>
-                <button
                   onClick={() => handleDownloadPdf(viewInvoice)}
                   disabled={pdfLoading || viewLoading}
                   className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                 >
                   {pdfLoading ? "Preparing..." : "Download PDF"}
                 </button>
-                <button
-                  onClick={() => handleDuplicate(viewInvoice.id)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Duplicate
-                </button>
-                <button
-                  onClick={() => openEditForm(viewInvoice.id)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Edit
-                </button>
+                {canManageInvoices && (
+                  <>
+                    <button
+                      onClick={() => setShowSendEmailModal(true)}
+                      disabled={viewLoading}
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                    >
+                      Send by Email
+                    </button>
+                    <button
+                      onClick={() => handleDuplicate(viewInvoice.id)}
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      Duplicate
+                    </button>
+                    <button
+                      onClick={() => openEditForm(viewInvoice.id)}
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      Edit
+                    </button>
+                  </>
+                )}
                 <button
                   onClick={() => {
                     setShowPaymentModal(false);
@@ -1356,12 +1372,14 @@ export default function Invoices() {
                         recorded
                       </p>
                     </div>
-                    <button
-                      onClick={() => setShowPaymentModal(true)}
-                      className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
-                    >
-                      + Add Payment
-                    </button>
+                    {canManageInvoices && (
+                      <button
+                        onClick={() => setShowPaymentModal(true)}
+                        className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                      >
+                        + Add Payment
+                      </button>
+                    )}
                   </div>
                   <div className="mt-3 space-y-3">
                     {(viewInvoice.payments || []).map((payment) => (
@@ -1389,14 +1407,18 @@ export default function Invoices() {
                               {payment.note || "No note"}
                             </p>
                           </div>
-                          <button
-                            onClick={() =>
-                              handleDeletePayment(payment.id, viewInvoice.id)
-                            }
-                            className="text-xs font-medium text-red-600 hover:underline"
-                          >
-                            Delete
-                          </button>
+                          {canManageInvoices ? (
+                            <button
+                              onClick={() =>
+                                handleDeletePayment(payment.id, viewInvoice.id)
+                              }
+                              className="text-xs font-medium text-red-600 hover:underline"
+                            >
+                              Delete
+                            </button>
+                          ) : (
+                            <span className="text-xs text-slate-500">Read-only</span>
+                          )}
                         </div>
                       </div>
                     ))}

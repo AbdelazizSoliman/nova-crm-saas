@@ -47,5 +47,10 @@ Rails.application.routes.draw do
 
     resources :plans, only: %i[index]
     resource :subscription, only: %i[show create update]
+
+    get "team", to: "team#index"
+    post "team/invite", to: "team#invite"
+    patch "team/:id", to: "team#update"
+    delete "team/:id", to: "team#destroy"
   end
 end

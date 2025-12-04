@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../api/client";
+import { usePermissions } from "../utils/permissions";
 
 const currencyOptions = ["USD", "EUR", "GBP", "SAR", "EGP"];
 const productTypeOptions = [
@@ -37,6 +38,7 @@ function formatMoney(amount, currency = "USD") {
 
 export default function Products() {
   const { token } = useAuth();
+  const { canManageProducts } = usePermissions();
 
   const [products, setProducts] = useState([]);
   const [meta, setMeta] = useState({ current_page: 1, total_pages: 1, total_records: 0 });
@@ -119,6 +121,7 @@ export default function Products() {
   });
 
   const openCreateForm = () => {
+    if (!canManageProducts) return;
     setEditingProduct(null);
     setFormData(buildEmptyProduct());
     setFormError("");
@@ -126,6 +129,7 @@ export default function Products() {
   };
 
   const openEditForm = (product) => {
+    if (!canManageProducts) return;
     setEditingProduct(product);
     setFormData({
       name: product.name || "",
@@ -149,6 +153,7 @@ export default function Products() {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (!canManageProducts) return;
     setSaving(true);
     setFormError("");
 
@@ -179,6 +184,7 @@ export default function Products() {
   };
 
   const handleDelete = async (product) => {
+    if (!canManageProducts) return;
     if (!window.confirm(`Delete product "${product.name}"?`)) return;
 
     try {
@@ -199,12 +205,14 @@ export default function Products() {
             Manage your catalog of products and services.
           </p>
         </div>
-        <button
-          onClick={openCreateForm}
-          className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-        >
-          + New product
-        </button>
+        {canManageProducts && (
+          <button
+            onClick={openCreateForm}
+            className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            + New product
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -303,18 +311,24 @@ export default function Products() {
                   </td>
                   <td className="px-4 py-3 text-slate-700">{product.category || "-"}</td>
                   <td className="px-4 py-3 text-right text-sm font-medium text-slate-700">
-                    <button
-                      onClick={() => openEditForm(product)}
-                      className="mr-3 text-slate-700 hover:underline"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(product)}
-                      className="text-red-600 hover:underline"
-                    >
-                      Delete
-                    </button>
+                    {canManageProducts ? (
+                      <>
+                        <button
+                          onClick={() => openEditForm(product)}
+                          className="mr-3 text-slate-700 hover:underline"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product)}
+                          className="text-red-600 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-xs text-slate-500">Read-only</span>
+                    )}
                   </td>
                 </tr>
               ))
@@ -341,7 +355,7 @@ export default function Products() {
       </div>
 
       {/* Form modal */}
-      {showForm && (
+      {showForm && canManageProducts && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
           <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">

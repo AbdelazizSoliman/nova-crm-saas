@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../api/client";
+import { usePermissions } from "../utils/permissions";
 
 const emptyForm = {
   name: "",
@@ -14,6 +15,7 @@ const emptyForm = {
 
 export default function Clients() {
   const { token } = useAuth();
+  const { canManageClients } = usePermissions();
 
   const [clients, setClients] = useState([]);
   const [meta, setMeta] = useState({
@@ -64,12 +66,14 @@ export default function Clients() {
   };
 
   const openCreateForm = () => {
+    if (!canManageClients) return;
     setEditingClient(null);
     setFormData(emptyForm);
     setShowForm(true);
   };
 
   const openEditForm = (client) => {
+    if (!canManageClients) return;
     setEditingClient(client);
     setFormData({
       name: client.name || "",
@@ -90,6 +94,8 @@ export default function Clients() {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (!canManageClients) return;
+
     setSaving(true);
     setError("");
 
@@ -120,6 +126,7 @@ export default function Clients() {
   };
 
   const handleDelete = async (client) => {
+    if (!canManageClients) return;
     if (!window.confirm(`Delete client "${client.name}"?`)) return;
 
     try {
@@ -148,12 +155,14 @@ export default function Clients() {
             Manage your customers and their contact information.
           </p>
         </div>
-        <button
-          onClick={openCreateForm}
-          className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-        >
-          + New client
-        </button>
+        {canManageClients && (
+          <button
+            onClick={openCreateForm}
+            className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            + New client
+          </button>
+        )}
       </div>
 
       {/* Search */}
@@ -233,18 +242,24 @@ export default function Clients() {
                     {client.country}
                   </td>
                   <td className="px-4 py-2 text-right">
-                    <button
-                      onClick={() => openEditForm(client)}
-                      className="mr-2 text-xs font-medium text-slate-700 hover:underline"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(client)}
-                      className="text-xs font-medium text-red-600 hover:underline"
-                    >
-                      Delete
-                    </button>
+                    {canManageClients ? (
+                      <>
+                        <button
+                          onClick={() => openEditForm(client)}
+                          className="mr-2 text-xs font-medium text-slate-700 hover:underline"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(client)}
+                          className="text-xs font-medium text-red-600 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-xs text-slate-500">Read-only</span>
+                    )}
                   </td>
                 </tr>
               ))
@@ -280,7 +295,7 @@ export default function Clients() {
       )}
 
       {/* Form drawer/modal (بسيط) */}
-      {showForm && (
+      {showForm && canManageClients && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">

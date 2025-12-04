@@ -3,6 +3,8 @@ require "image_processing/mini_magick"
 module Api
   class SettingsController < BaseController
     rescue_from ActiveRecord::RecordInvalid, with: :record_invalid
+    before_action :authorize_settings_view!, only: %i[show invoice_branding]
+    before_action :authorize_manage_settings!, only: %i[update_invoice_branding update_account]
 
     def show
       render json: serialized_settings
@@ -151,6 +153,14 @@ module Api
 
     def invoice_branding_params
       params.permit(:invoice_template, :brand_color, :footer_text, :additional_note)
+    end
+
+    def authorize_settings_view!
+      render_forbidden unless Authorization.can_view_settings?(current_user)
+    end
+
+    def authorize_manage_settings!
+      render_forbidden unless Authorization.can_manage_settings?(current_user)
     end
 
     def attach_invoice_logo!

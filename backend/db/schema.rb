@@ -142,6 +142,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_05_120000) do
     t.string "avatar_url"
     t.string "locale"
     t.string "timezone"
+    t.string "status", default: "active", null: false
     t.index ["account_id"], name: "index_users_on_account_id"
   end
 

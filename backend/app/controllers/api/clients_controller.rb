@@ -1,6 +1,7 @@
 module Api
   class ClientsController < BaseController
     before_action :set_client, only: %i[show update destroy]
+    before_action :authorize_manage_clients!, only: %i[create update destroy]
 
     def index
       scope = current_account.clients.order(created_at: :desc)
@@ -80,6 +81,10 @@ module Api
 
     def client_params
       params.require(:client).permit(:name, :contact_name, :email, :phone, :address, :country, :notes)
+    end
+
+    def authorize_manage_clients!
+      render_forbidden unless Authorization.can_manage_clients?(current_user)
     end
   end
 end

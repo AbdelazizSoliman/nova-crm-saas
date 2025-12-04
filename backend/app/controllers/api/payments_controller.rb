@@ -2,6 +2,7 @@ module Api
   class PaymentsController < BaseController
     before_action :set_invoice, only: %i[index create], if: -> { params[:invoice_id].present? }
     before_action :set_payment, only: %i[destroy]
+    before_action :authorize_manage_payments!, only: %i[create destroy]
 
     # GET /api/invoices/:invoice_id/payments
     def index
@@ -95,7 +96,11 @@ module Api
                         .where(invoices: { account_id: current_account.id })
                         .find(params[:id])
     end
-    
+
+    def authorize_manage_payments!
+      render_forbidden unless Authorization.can_manage_payments?(current_user)
+    end
+
     def payment_params
       params.require(:payment).permit(:amount, :paid_at, :method, :note)
     end

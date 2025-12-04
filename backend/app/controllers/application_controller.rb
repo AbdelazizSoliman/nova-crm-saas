@@ -15,7 +15,10 @@ class ApplicationController < ActionController::API
       @current_account = @current_user&.account
     end
 
-    render json: { error: "Unauthorized" }, status: :unauthorized unless @current_user
+    unless @current_user && Authorization.active?(@current_user)
+      render json: { error: "Unauthorized" }, status: :unauthorized
+      return
+    end
   end
 
   def current_user
@@ -32,6 +35,10 @@ class ApplicationController < ActionController::API
 
   def record_invalid(exception)
     render json: { errors: exception.record.errors.full_messages }, status: :unprocessable_entity
+  end
+
+  def render_forbidden(message = "Forbidden")
+    render json: { error: message }, status: :forbidden
   end
 
   # ---- pagination helpers ----
