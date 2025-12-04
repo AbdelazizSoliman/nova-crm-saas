@@ -13,7 +13,6 @@ import {
   BanknotesIcon,
   ClockIcon,
   CreditCardIcon,
-  ArrowDownTrayIcon,
   SwatchIcon,
   UserPlusIcon,
   BellIcon,
@@ -43,12 +42,6 @@ const navItems = [
     to: "/settings/invoice-template",
     label: "Invoice Templates",
     icon: SwatchIcon,
-    shouldDisplay: (permissions) => permissions.canViewSettings,
-  },
-  {
-    to: "/settings/import-export",
-    label: "Import & Export",
-    icon: ArrowDownTrayIcon,
     shouldDisplay: (permissions) => permissions.canViewSettings,
   },
   {
