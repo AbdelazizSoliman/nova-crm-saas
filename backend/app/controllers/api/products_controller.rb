@@ -1,6 +1,7 @@
 module Api
   class ProductsController < BaseController
     before_action :set_product, only: %i[show update destroy]
+    before_action :authorize_manage_products!, only: %i[create update destroy]
 
     def index
       scope = current_account.products.order(created_at: :desc)
@@ -124,6 +125,10 @@ module Api
         :category,
         :is_active
       )
+    end
+
+    def authorize_manage_products!
+      render_forbidden unless Authorization.can_manage_products?(current_user)
     end
   end
 end

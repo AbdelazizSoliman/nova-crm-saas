@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { usePermissions } from "../utils/permissions";
 
 const defaultAccountState = {
   company_name: "",
@@ -24,6 +25,8 @@ const currencyOptions = ["USD", "EUR", "GBP", "SAR", "EGP"];
 
 export default function Settings() {
   const { token, user } = useAuth();
+  const permissions = usePermissions();
+  const readOnlySettings = !permissions.canManageSettings;
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
   const [sectionErrors, setSectionErrors] = useState({
@@ -82,10 +85,10 @@ export default function Settings() {
       }
     };
 
-    if (token) {
+    if (token && permissions.canViewSettings) {
       loadSettings();
     }
-  }, [token]);
+  }, [token, permissions.canViewSettings]);
 
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
@@ -131,6 +134,14 @@ export default function Settings() {
   };
 
   const handleAccountSave = async () => {
+    if (readOnlySettings) {
+      setSectionErrors((prev) => ({
+        ...prev,
+        account: "You do not have permission to update company settings.",
+      }));
+      return;
+    }
+
     setSaving((prev) => ({ ...prev, account: true }));
     setSectionErrors((prev) => ({ ...prev, account: "" }));
     setSectionSuccess((prev) => ({ ...prev, account: "" }));
@@ -157,6 +168,14 @@ export default function Settings() {
   };
 
   const handleInvoicingSave = async () => {
+    if (readOnlySettings) {
+      setSectionErrors((prev) => ({
+        ...prev,
+        invoicing: "You do not have permission to update invoicing settings.",
+      }));
+      return;
+    }
+
     setSaving((prev) => ({ ...prev, invoicing: true }));
     setSectionErrors((prev) => ({ ...prev, invoicing: "" }));
     setSectionSuccess((prev) => ({ ...prev, invoicing: "" }));
@@ -192,6 +211,14 @@ export default function Settings() {
         ? 0
         : Number(invoicing.default_payment_terms_days),
   });
+
+  if (!permissions.canViewSettings) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        You do not have permission to access settings.
+      </div>
+    );
+  }
 
   if (loading) {
     return <p className="text-sm text-slate-600">Loading settings...</p>;
@@ -314,8 +341,9 @@ export default function Settings() {
           error={sectionErrors.account}
           success={sectionSuccess.account}
           actionLabel="Save company settings"
+          disabled={readOnlySettings}
         >
-          <div className="space-y-4">
+          <fieldset disabled={readOnlySettings} className="space-y-4 disabled:opacity-90">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
                 Company name
@@ -408,7 +436,7 @@ export default function Settings() {
                 )}
               </div>
             </div>
-          </div>
+          </fieldset>
         </SettingsCard>
 
         <SettingsCard
@@ -419,8 +447,9 @@ export default function Settings() {
           error={sectionErrors.invoicing}
           success={sectionSuccess.invoicing}
           actionLabel="Save billing settings"
+          disabled={readOnlySettings}
         >
-          <div className="space-y-4">
+          <fieldset disabled={readOnlySettings} className="space-y-4 disabled:opacity-90">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">
@@ -517,7 +546,7 @@ export default function Settings() {
                 />
               </div>
             </div>
-          </div>
+          </fieldset>
         </SettingsCard>
       </div>
     </div>
@@ -533,6 +562,7 @@ function SettingsCard({
   saving,
   error,
   success,
+  disabled = false,
 }) {
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
@@ -556,7 +586,7 @@ function SettingsCard({
       <div className="mt-4 flex justify-end">
         <button
           onClick={onSave}
-          disabled={saving}
+          disabled={saving || disabled}
           className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
         >
           {saving ? "Saving..." : actionLabel}

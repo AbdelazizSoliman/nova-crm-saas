@@ -1,6 +1,8 @@
 module Api
   class SubscriptionsController < BaseController
     before_action :set_current_subscription, only: %i[show update]
+    before_action :authorize_billing_view!, only: %i[show]
+    before_action :authorize_billing_management!, only: %i[create update]
 
     def show
       render json: subscription_response(@subscription)
@@ -122,6 +124,14 @@ module Api
 
     def subscription_params
       params.permit(:plan_id, :cancel_at_period_end)
+    end
+
+    def authorize_billing_view!
+      render_forbidden unless Authorization.can_view_billing?(current_user)
+    end
+
+    def authorize_billing_management!
+      render_forbidden unless Authorization.can_manage_billing?(current_user)
     end
   end
 end

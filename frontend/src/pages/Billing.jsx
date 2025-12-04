@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { usePermissions } from "../utils/permissions";
 
 export default function Billing() {
   const { token } = useAuth();
+  const permissions = usePermissions();
   const [plans, setPlans] = useState([]);
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [currentPlan, setCurrentPlan] = useState(null);
@@ -33,10 +35,10 @@ export default function Billing() {
   };
 
   useEffect(() => {
-    if (token) {
+    if (token && permissions.canViewBilling) {
       loadBillingData();
     }
-  }, [token]);
+  }, [token, permissions.canViewBilling]);
 
   const formatPrice = (plan) => {
     const price = Number(plan.price || 0).toFixed(2);
@@ -44,7 +46,7 @@ export default function Billing() {
   };
 
   const handleToggleCancellation = async () => {
-    if (!currentSubscription) return;
+    if (!currentSubscription || !permissions.canManageBilling) return;
     setActionLoading(true);
     setError("");
     setSuccess("");
@@ -73,6 +75,8 @@ export default function Billing() {
   };
 
   const handleChoosePlan = async (planId) => {
+    if (!permissions.canManageBilling) return;
+
     setSelectingPlanId(planId);
     setError("");
     setSuccess("");
@@ -97,6 +101,14 @@ export default function Billing() {
     if (!currentPlan) return () => false;
     return (planId) => currentPlan.id === planId;
   }, [currentPlan]);
+
+  if (!permissions.canViewBilling) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        You do not have permission to access billing.
+      </div>
+    );
+  }
 
   if (loading) {
     return <p className="text-sm text-slate-600">Loading billing information...</p>;
@@ -158,7 +170,7 @@ export default function Billing() {
               {currentSubscription && (
                 <button
                   onClick={handleToggleCancellation}
-                  disabled={actionLoading}
+                  disabled={actionLoading || !permissions.canManageBilling}
                   className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {actionLoading ? "Updating..." : currentSubscription.cancel_at_period_end ? "Undo cancellation" : "Cancel at end of period"}
@@ -205,7 +217,7 @@ export default function Billing() {
 
                   <button
                     onClick={() => handleChoosePlan(plan.id)}
-                    disabled={current || selectingPlanId === plan.id}
+                    disabled={current || selectingPlanId === plan.id || !permissions.canManageBilling}
                     className={`mt-5 w-full rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition ${
                       current
                         ? "cursor-not-allowed bg-slate-200 text-slate-500"

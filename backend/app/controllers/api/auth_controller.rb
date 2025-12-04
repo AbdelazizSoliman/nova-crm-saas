@@ -26,6 +26,7 @@ module Api
             name: "#{user.first_name} #{user.last_name}",
             email: user.email,
             role: user.role,
+            status: user.status,
             account: {
               id: account.id,
               name: account.name,
@@ -42,7 +43,7 @@ module Api
     def login
       user = User.find_by(email: params[:email])
 
-      if user&.authenticate(params[:password])
+      if user&.active? && user&.authenticate(params[:password])
         token = JsonWebToken.encode(user_id: user.id, account_id: user.account_id)
 
         render json: {
@@ -52,6 +53,7 @@ module Api
             name: "#{user.first_name} #{user.last_name}",
             email: user.email,
             role: user.role,
+            status: user.status,
             account_id: user.account_id
           }
         }, status: :ok

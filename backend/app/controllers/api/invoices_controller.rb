@@ -1,6 +1,7 @@
 module Api
   class InvoicesController < BaseController
     before_action :set_invoice, only: %i[show update destroy pdf send_email]
+    before_action :authorize_manage_invoices!, only: %i[create update destroy duplicate send_email preview_pdf]
 
     # GET /api/invoices
     def index
@@ -255,6 +256,10 @@ module Api
                   .invoices
                   .includes(:client, :invoice_items, :payments)
                   .find(params[:id])
+    end
+
+    def authorize_manage_invoices!
+      render_forbidden unless Authorization.can_manage_invoices?(current_user)
     end
 
     def email_params
