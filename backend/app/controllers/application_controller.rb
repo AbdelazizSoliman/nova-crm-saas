@@ -2,6 +2,7 @@ class ApplicationController < ActionController::API
   include ActionController::Cookies
 
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
+  rescue_from ActiveRecord::RecordInvalid, with: :record_invalid
 
   private
 
@@ -34,7 +35,15 @@ class ApplicationController < ActionController::API
   end
 
   def record_invalid(exception)
-    render json: { errors: exception.record.errors.full_messages }, status: :unprocessable_entity
+    error_details = exception.record&.errors
+
+    errors_hash = if error_details.present?
+      error_details.to_hash(true)
+    else
+      { base: [exception.message] }
+    end
+
+    render json: { errors: errors_hash }, status: :unprocessable_entity
   end
 
   def render_forbidden(message = "Forbidden")
