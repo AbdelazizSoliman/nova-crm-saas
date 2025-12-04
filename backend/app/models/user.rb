@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   belongs_to :account
   has_many :activity_logs, dependent: :nullify
+  has_many :notifications, dependent: :destroy
 
   has_secure_password
 

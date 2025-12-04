@@ -35,6 +35,8 @@ module Api
           metadata: { plan_id: plan.id },
           request: request
         )
+
+        notify_subscription_created(subscription)
       end
 
       render json: subscription_response(subscription), status: :created
@@ -49,8 +51,11 @@ module Api
 
       return render json: { error: "Plan not found" }, status: :not_found if subscription_params[:plan_id] && new_plan.blank?
 
+      plan_changed = false
+
       ApplicationRecord.transaction do
         if new_plan && new_plan != @subscription.plan
+          plan_changed = true
           @subscription.plan = new_plan
           ActivityLogger.log(
             account: current_account,
@@ -74,10 +79,14 @@ module Api
             metadata: {},
             request: request
           )
+
+          notify_cancellation_change(@subscription, cancel_value)
         end
 
         @subscription.save!
       end
+
+      notify_plan_change(@subscription) if plan_changed
 
       render json: subscription_response(@subscription)
     end
@@ -132,6 +141,36 @@ module Api
 
     def authorize_billing_management!
       render_forbidden unless Authorization.can_manage_billing?(current_user)
+    end
+
+    def notify_subscription_created(subscription)
+      NotificationsService.notify_account_admins(
+        account: current_account,
+        title: "Subscription started",
+        body: "Subscribed to #{subscription.plan.name} plan.",
+        action: "subscription_created",
+        notifiable: subscription
+      )
+    end
+
+    def notify_plan_change(subscription)
+      NotificationsService.notify_account_admins(
+        account: current_account,
+        title: "Plan changed",
+        body: "Subscription updated to #{subscription.plan.name} plan.",
+        action: "subscription_updated",
+        notifiable: subscription
+      )
+    end
+
+    def notify_cancellation_change(subscription, cancel_value)
+      NotificationsService.notify_account_admins(
+        account: current_account,
+        title: cancel_value ? "Cancellation scheduled" : "Cancellation removed",
+        body: cancel_value ? "Subscription will end at period end." : "Subscription cancellation was removed.",
+        action: cancel_value ? "subscription_cancellation_scheduled" : "subscription_cancellation_removed",
+        notifiable: subscription
+      )
     end
   end
 end

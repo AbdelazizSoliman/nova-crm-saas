@@ -34,6 +34,8 @@ module Api
           request: request
         )
 
+        notify_user_invited(user)
+
         render json: team_payload(user), status: :created
       else
         render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
@@ -62,6 +64,9 @@ module Api
         log_role_change(old_role)
         log_deactivation(old_status)
 
+        notify_role_change(@user, old_role)
+        notify_user_deactivated(@user, old_status)
+
         render json: team_payload(@user)
       else
         render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
@@ -77,6 +82,7 @@ module Api
         return render_forbidden("Admins cannot deactivate the owner")
       end
 
+      old_status = @user.status
       @user.status = :deactivated
 
       if @user.save
@@ -88,6 +94,8 @@ module Api
           metadata: { user_id: @user.id },
           request: request
         )
+
+        notify_user_deactivated(@user, old_status)
 
         render json: team_payload(@user)
       else
@@ -193,6 +201,40 @@ module Api
         record: @user,
         metadata: { user_id: @user.id },
         request: request
+      )
+    end
+
+    def notify_user_invited(user)
+      NotificationsService.notify_account_admins(
+        account: current_account,
+        title: "User invited",
+        body: "#{current_user.name.presence || current_user.email} invited #{user.name.presence || user.email}.",
+        action: "user_invited",
+        notifiable: user
+      )
+    end
+
+    def notify_role_change(user, old_role)
+      return if old_role == user.role
+
+      NotificationsService.notify_user_and_admins(
+        user: user,
+        title: "User role changed",
+        body: "Role updated from #{old_role} to #{user.role}.",
+        action: "user_role_changed",
+        notifiable: user
+      )
+    end
+
+    def notify_user_deactivated(user, previous_status)
+      return unless previous_status != user.status && user.deactivated?
+
+      NotificationsService.notify_user_and_admins(
+        user: user,
+        title: "User deactivated",
+        body: "#{user.name.presence || user.email} has been deactivated.",
+        action: "user_deactivated",
+        notifiable: user
       )
     end
   end

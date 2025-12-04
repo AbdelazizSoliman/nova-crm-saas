@@ -48,6 +48,17 @@ Rails.application.routes.draw do
     resources :plans, only: %i[index]
     resource :subscription, only: %i[show create update]
 
+    resources :notifications, only: %i[index] do
+      collection do
+        get :unread_count
+        patch :mark_all_read
+      end
+
+      member do
+        patch :mark_read
+      end
+    end
+
     get "team", to: "team#index"
     post "team/invite", to: "team#invite"
     patch "team/:id", to: "team#update"

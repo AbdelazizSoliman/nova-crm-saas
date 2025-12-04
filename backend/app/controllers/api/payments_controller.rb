@@ -48,10 +48,14 @@ module Api
 
     # POST /api/invoices/:invoice_id/payments
     def create
+      status_before = @invoice.status
       payment = @invoice.payments.new(payment_params)
 
       if payment.save
         @invoice.recalculate_totals!
+
+        notify_payment_created(payment)
+        notify_invoice_status_change(@invoice, status_before)
 
         ActivityLogger.log(
           account: current_account,
@@ -103,6 +107,30 @@ module Api
 
     def payment_params
       params.require(:payment).permit(:amount, :paid_at, :method, :note)
+    end
+
+    def notify_payment_created(payment)
+      NotificationsService.notify_account_admins(
+        account: current_account,
+        title: "Payment received",
+        body: "Payment of #{payment.amount} received for invoice #{payment.invoice.number}.",
+        action: "payment_received",
+        notifiable: payment
+      )
+    end
+
+    def notify_invoice_status_change(invoice, previous_status)
+      return if invoice.blank?
+
+      if previous_status != "paid" && invoice.status == "paid"
+        NotificationsService.notify_account_admins(
+          account: current_account,
+          title: "Invoice paid",
+          body: "Invoice #{invoice.number} has been marked as paid.",
+          action: "invoice_paid",
+          notifiable: invoice
+        )
+      end
     end
   end
 end
