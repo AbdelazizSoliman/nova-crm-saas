@@ -130,6 +130,8 @@ module Api
         request: request
       )
 
+      notify_invoice_created(invoice)
+
       render json: invoice.as_json(
         include: {
           client: { only: %i[id name] },
@@ -172,6 +174,8 @@ module Api
         },
         request: request
       )
+
+      notify_invoice_status_change(@invoice, status_before)
 
       render json: @invoice.as_json(
         include: {
@@ -333,6 +337,38 @@ module Api
 
     def preview_branding_params
       params.fetch(:branding, {}).permit(:brand_color, :footer_text, :additional_note, :template)
+    end
+
+    def notify_invoice_status_change(invoice, previous_status)
+      if previous_status != "paid" && invoice.status == "paid"
+        NotificationsService.notify_account_admins(
+          account: current_account,
+          title: "Invoice paid",
+          body: "Invoice #{invoice.number} has been marked as paid.",
+          action: "invoice_paid",
+          notifiable: invoice
+        )
+      end
+
+      if previous_status != "overdue" && invoice.status == "overdue"
+        NotificationsService.notify_account_admins(
+          account: current_account,
+          title: "Invoice overdue",
+          body: "Invoice #{invoice.number} is now overdue.",
+          action: "invoice_overdue",
+          notifiable: invoice
+        )
+      end
+    end
+
+    def notify_invoice_created(invoice)
+      NotificationsService.notify_account_admins(
+        account: current_account,
+        title: "Invoice created",
+        body: "Invoice #{invoice.number} was created for #{invoice.client.name}.",
+        action: "invoice_created",
+        notifiable: invoice
+      )
     end
   end
 end
