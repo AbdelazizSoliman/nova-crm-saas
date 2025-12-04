@@ -47,7 +47,7 @@ export default function InvoiceBranding() {
       setLoading(true);
       setError("");
       try {
-        const data = await apiRequest(`/settings/invoice`, { token });
+        const data = await apiRequest(`/settings/branding`, { token });
         setBranding({ ...defaultBranding, ...(data || {}) });
       } catch (err) {
         setError(err.message || "Failed to load branding settings.");
@@ -74,8 +74,15 @@ export default function InvoiceBranding() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!/(png|jpg|jpeg|svg)/i.test(file.type)) {
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml"];
+
+    if (!allowedTypes.includes(file.type)) {
       setError("Logo must be a PNG, JPG, or SVG file.");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Logo must be smaller than 2MB.");
       return;
     }
 
@@ -103,7 +110,7 @@ export default function InvoiceBranding() {
         formData.append("remove_logo", "true");
       }
 
-      const response = await apiFormRequest(`/settings/invoice`, {
+      const response = await apiFormRequest(`/settings/branding`, {
         method: "PATCH",
         token,
         body: formData,
@@ -183,9 +190,9 @@ export default function InvoiceBranding() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Invoice Templates & Branding</h1>
+        <h1 className="text-xl font-semibold text-slate-900">Branding & Invoice Templates</h1>
         <p className="text-sm text-slate-600">
-          Choose a PDF layout, upload your logo, and align invoice colors with your brand.
+          Upload your company logo, pick a brand color, and align invoice PDFs with your identity.
         </p>
       </div>
 
@@ -280,7 +287,7 @@ export default function InvoiceBranding() {
                       <img
                         src={branding.logo_url}
                         alt="Logo preview"
-                        className="h-14 w-14 rounded object-contain border border-slate-200 bg-white"
+                        className="h-20 w-auto rounded border border-slate-200 bg-white object-contain"
                       />
                       <div className="text-xs text-slate-600">Used in all templates</div>
                     </div>

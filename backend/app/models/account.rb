@@ -3,6 +3,7 @@ class Account < ApplicationRecord
   INVOICE_TEMPLATES = %w[template_a template_b template_c classic default].freeze
 
   has_one_attached :invoice_logo
+  has_one_attached :logo
 
   has_many :users, dependent: :destroy
   has_many :clients, dependent: :destroy
@@ -23,6 +24,7 @@ class Account < ApplicationRecord
   validates :default_payment_terms_days, numericality: { greater_than: 0, only_integer: true }
   validates :invoice_template, inclusion: { in: INVOICE_TEMPLATES }
   validates :brand_color, format: { with: /\A#?(?:[A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})\z/ }, allow_nil: true
+  validate :validate_logo_file
 
   before_validation :normalize_brand_color, :normalize_invoice_template
 
@@ -50,8 +52,14 @@ class Account < ApplicationRecord
       brand_color: invoice_brand_color,
       footer_text: footer_text,
       additional_note: additional_note,
-      logo: invoice_logo
+      logo: branding_logo
     }
+  end
+
+  def branding_logo
+    return logo if logo.attached?
+
+    invoice_logo
   end
 
   private
@@ -66,5 +74,21 @@ class Account < ApplicationRecord
 
   def normalize_invoice_template
     self.invoice_template = invoice_template_key if invoice_template_changed?
+  end
+
+  def validate_logo_file
+    return unless branding_logo&.attached?
+
+    logo_attachment = logo.attached? ? logo.attachment : invoice_logo.attachment
+    return unless logo_attachment&.blob
+
+    allowed_types = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml"]
+    unless logo_attachment.blob.content_type.in?(allowed_types)
+      errors.add(:logo, "must be a PNG, JPG, or SVG file")
+    end
+
+    if logo_attachment.blob.byte_size > 2.megabytes
+      errors.add(:logo, "must be smaller than 2MB")
+    end
   end
 end

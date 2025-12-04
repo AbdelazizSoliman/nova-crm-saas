@@ -3,6 +3,7 @@ class Invoice < ApplicationRecord
   belongs_to :client
   has_many :invoice_items, dependent: :destroy
   has_many :payments, dependent: :destroy
+  has_many_attached :attachments
 
   STATUSES = %w[draft sent paid overdue cancelled].freeze
 
@@ -10,6 +11,7 @@ class Invoice < ApplicationRecord
   validates :currency, inclusion: { in: Account::VALID_CURRENCIES }
   validates :tax_rate, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 50 }
   validates :tax_name, length: { maximum: 50 }, allow_blank: true
+  validate :validate_attachments
 
   accepts_nested_attributes_for :invoice_items, allow_destroy: true
   accepts_nested_attributes_for :payments, allow_destroy: true
@@ -65,5 +67,20 @@ class Invoice < ApplicationRecord
     self.currency ||= account&.default_currency || "USD"
     self.tax_rate = account&.tax_rate if tax_rate.nil?
     self.tax_name ||= account&.tax_name || "VAT"
+  end
+
+  def validate_attachments
+    attachments.each do |attachment|
+      validate_attachment_blob(attachment.blob)
+    end
+  end
+
+  def validate_attachment_blob(blob)
+    return unless blob
+
+    allowed_types = %w[application/pdf application/vnd.openxmlformats-officedocument.wordprocessingml.document application/vnd.openxmlformats-officedocument.spreadsheetml.sheet image/png image/jpeg image/jpg]
+    unless blob.content_type.in?(allowed_types)
+      errors.add(:attachments, "must be a PDF, DOCX, XLSX, PNG, or JPG file")
+    end
   end
 end

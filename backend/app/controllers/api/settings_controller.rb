@@ -3,8 +3,8 @@ require "image_processing/mini_magick"
 module Api
   class SettingsController < BaseController
     rescue_from ActiveRecord::RecordInvalid, with: :record_invalid
-    before_action :authorize_settings_view!, only: %i[show invoice_branding]
-    before_action :authorize_manage_settings!, only: %i[update_invoice_branding update_account]
+    before_action :authorize_settings_view!, only: %i[show invoice_branding branding]
+    before_action :authorize_manage_settings!, only: %i[update_invoice_branding update_branding update_account]
 
     def show
       render json: serialized_settings
@@ -14,10 +14,18 @@ module Api
       render json: branding_payload
     end
 
+    def branding
+      render json: branding_payload
+    end
+
     def update_invoice_branding
+      update_branding
+    end
+
+    def update_branding
       current_account.assign_attributes(invoice_branding_params)
 
-      attach_invoice_logo!
+      attach_branding_logo!
 
       current_account.save!
 
@@ -26,7 +34,7 @@ module Api
         user: current_user,
         action: "invoice_branding_updated",
         record: current_account,
-        metadata: invoice_branding_params.compact.merge(logo: current_account.invoice_logo.attached?),
+        metadata: invoice_branding_params.compact.merge(logo: current_account.branding_logo.attached?),
         request: request
       )
 
@@ -163,24 +171,31 @@ module Api
       render_forbidden unless Authorization.can_manage_settings?(current_user)
     end
 
-    def attach_invoice_logo!
+    def attach_branding_logo!
       logo_file = params[:logo]
 
       if ActiveModel::Type::Boolean.new.cast(params[:remove_logo])
+        current_account.logo.purge if current_account.logo.attached?
         current_account.invoice_logo.purge if current_account.invoice_logo.attached?
         return
       end
 
       return unless logo_file.present?
 
-      unless logo_file.content_type.in?(%w[image/png image/jpeg image/svg+xml])
-        current_account.errors.add(:invoice_logo, "must be a PNG, JPG, or SVG file")
+      allowed_types = %w[image/png image/jpeg image/jpg image/svg+xml]
+      unless logo_file.content_type.in?(allowed_types)
+        current_account.errors.add(:logo, "must be a PNG, JPG, or SVG file")
+        raise ActiveRecord::RecordInvalid.new(current_account)
+      end
+
+      if logo_file.size > 2.megabytes
+        current_account.errors.add(:logo, "must be smaller than 2MB")
         raise ActiveRecord::RecordInvalid.new(current_account)
       end
 
       processed_file = process_logo_file(logo_file)
 
-      current_account.invoice_logo.attach(
+      current_account.logo.attach(
         io: processed_file[:io],
         filename: processed_file[:filename],
         content_type: processed_file[:content_type]
@@ -204,17 +219,18 @@ module Api
 
     def branding_payload
       account = current_account
+      logo_attachment = account.branding_logo
       logo_representation =
         begin
-          if account.invoice_logo.variable?
-            account.invoice_logo.variant(resize_to_limit: [320, 320]).processed
+          if logo_attachment&.variable?
+            logo_attachment.variant(resize_to_limit: [320, 320]).processed
           else
-            account.invoice_logo
+            logo_attachment
           end
         rescue StandardError => e
           Rails.logger.warn("Invoice logo preview failed: #{e.message}")
           nil
-        end if account.invoice_logo.attached?
+        end if logo_attachment&.attached?
 
       {
         invoice_template: account.invoice_template_key,

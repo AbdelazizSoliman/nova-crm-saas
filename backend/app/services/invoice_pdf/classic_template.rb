@@ -366,10 +366,11 @@ module InvoicePdf
       lines.join("\n")
     end
 
-    def draw_logo(pdf, width: 120, position: :left)
+    def draw_logo(pdf, width: 120, position: :left, height: 80)
       return unless (data = logo_io)
 
-      pdf.image StringIO.new(data), width: width, position: position
+      max_width = [width, 180].min
+      pdf.image StringIO.new(data), fit: [max_width, height], position: position
     end
 
     def logo_io
@@ -377,7 +378,7 @@ module InvoicePdf
       return unless logo.respond_to?(:attached?) && logo.attached?
 
       if logo.variable?
-        logo.variant(resize_to_limit: [240, 120]).processed.download
+        logo.variant(resize_to_limit: [180, 80]).processed.download
       else
         logo.download
       end

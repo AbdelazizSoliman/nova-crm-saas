@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../api/client";
 import { usePermissions } from "../utils/permissions";
@@ -16,6 +17,7 @@ const emptyForm = {
 export default function Clients() {
   const { token } = useAuth();
   const { canManageClients } = usePermissions();
+  const navigate = useNavigate();
 
   const [clients, setClients] = useState([]);
   const [meta, setMeta] = useState({
@@ -242,24 +244,32 @@ export default function Clients() {
                     {client.country}
                   </td>
                   <td className="px-4 py-2 text-right">
-                    {canManageClients ? (
-                      <>
-                        <button
-                          onClick={() => openEditForm(client)}
-                          className="mr-2 text-xs font-medium text-slate-700 hover:underline"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(client)}
-                          className="text-xs font-medium text-red-600 hover:underline"
-                        >
-                          Delete
-                        </button>
-                      </>
-                    ) : (
-                      <span className="text-xs text-slate-500">Read-only</span>
-                    )}
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => navigate(`/clients/${client.id}`)}
+                        className="text-xs font-medium text-slate-700 hover:underline"
+                      >
+                        View
+                      </button>
+                      {canManageClients ? (
+                        <>
+                          <button
+                            onClick={() => openEditForm(client)}
+                            className="text-xs font-medium text-slate-700 hover:underline"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(client)}
+                            className="text-xs font-medium text-red-600 hover:underline"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-xs text-slate-500">Read only</span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))

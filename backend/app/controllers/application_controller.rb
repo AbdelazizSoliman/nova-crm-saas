@@ -65,4 +65,15 @@ class ApplicationController < ActionController::API
       total_pages: total_pages
     }]
   end
+
+  def demo_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV["DEMO_MODE"])
+  end
+
+  def ensure_uploads_allowed!
+    return unless demo_mode?
+
+    render_forbidden("File uploads are disabled in demo mode")
+    throw(:abort)
+  end
 end
