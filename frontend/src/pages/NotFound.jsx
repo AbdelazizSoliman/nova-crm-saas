@@ -7,7 +7,7 @@ export default function NotFound() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-6 text-center">
-      <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-xl font-bold text-white">
+      <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-700 text-xl font-bold text-white">
         N
       </div>
       <h1 className="text-3xl font-semibold text-slate-900">Page not found</h1>
@@ -16,7 +16,7 @@ export default function NotFound() {
       </p>
       <Link
         to={backHref}
-        className="mt-6 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-slate-800"
+        className="mt-6 rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-brand-600"
       >
         Back to {token ? "dashboard" : "home"}
       </Link>

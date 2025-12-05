@@ -221,7 +221,7 @@ export default function Billing() {
                     className={`mt-5 w-full rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition ${
                       current
                         ? "cursor-not-allowed bg-slate-200 text-slate-500"
-                        : "bg-slate-900 text-white hover:bg-slate-800"
+                        : "bg-brand-700 text-white hover:bg-brand-600"
                     } ${selectingPlanId === plan.id ? "opacity-70" : ""}`}
                   >
                     {current ? "Current plan" : selectingPlanId === plan.id ? "Updating..." : "Choose this plan"}

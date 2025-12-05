@@ -68,12 +68,12 @@ export default function AppLayout() {
 
   return (
     <NotificationsProvider>
-      <div className="min-h-screen bg-slate-100 flex">
+      <div className="min-h-screen bg-brand-50 flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-slate-900 text-slate-100 flex flex-col">
-          <div className="px-6 py-4 border-b border-slate-800">
+        <aside className="w-64 bg-brand-900 text-brand-50 flex flex-col">
+          <div className="px-6 py-4 border-b border-brand-800">
             <h1 className="text-lg font-semibold">NovaCRM</h1>
-            <p className="text-xs text-slate-400">Simple SaaS CRM & Billing</p>
+            <p className="text-xs text-brand-200">Simple SaaS CRM & Billing</p>
           </div>
 
           <nav className="flex-1 px-3 py-4 space-y-1">
@@ -87,8 +87,8 @@ export default function AppLayout() {
                     [
                       "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition",
                       isActive
-                        ? "bg-slate-800 text-white"
-                        : "text-slate-300 hover:bg-slate-800/60 hover:text-white",
+                        ? "bg-brand-800 text-white"
+                        : "text-brand-100 hover:bg-brand-800/70 hover:text-white",
                     ].join(" ")
                   }
                 >
@@ -98,16 +98,16 @@ export default function AppLayout() {
               ))}
           </nav>
 
-          <div className="px-4 py-3 border-t border-slate-800 flex items-center justify-between text-xs">
+          <div className="px-4 py-3 border-t border-brand-800 flex items-center justify-between text-xs">
             <div>
-              <p className="font-medium text-slate-100 truncate max-w-[130px]">
+              <p className="font-medium text-brand-50 truncate max-w-[130px]">
                 {user?.name}
               </p>
-              <p className="text-slate-400 capitalize">{user?.role}</p>
+              <p className="text-brand-200 capitalize">{user?.role}</p>
             </div>
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-1 text-slate-300 hover:text-white"
+              className="inline-flex items-center gap-1 text-brand-100 hover:text-white"
             >
               <ArrowRightOnRectangleIcon className="h-5 w-5" />
             </button>
@@ -117,16 +117,16 @@ export default function AppLayout() {
         {/* Main content */}
         <div className="flex-1 flex flex-col">
           {/* Top bar */}
-          <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+          <header className="h-16 bg-brand-50 border-b border-brand-100 flex items-center justify-between px-6">
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-400">Current Page</p>
-              <h2 className="text-lg font-semibold text-slate-800">{headerTitle}</h2>
+              <p className="text-xs uppercase tracking-wide text-brand-700">Current Page</p>
+              <h2 className="text-lg font-semibold text-brand-900">{headerTitle}</h2>
             </div>
             <div className="flex items-center gap-4">
               <NotificationsDropdown />
               <div className="text-right">
-                <p className="text-sm font-semibold text-slate-800">{user?.name || user?.email}</p>
-                <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
+                <p className="text-sm font-semibold text-brand-900">{user?.name || user?.email}</p>
+                <p className="text-xs text-brand-700 capitalize">{user?.role}</p>
               </div>
             </div>
           </header>

@@ -193,7 +193,7 @@ export default function Payments() {
           <button
             onClick={() => setShowAddModal(true)}
             disabled={!selectedInvoiceId}
-            className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
           >
             + Add payment
           </button>
@@ -283,7 +283,7 @@ export default function Payments() {
           <div className="md:col-span-2 lg:col-span-2 flex items-end gap-3">
             <button
               type="submit"
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
             >
               Apply filters
             </button>
@@ -401,7 +401,7 @@ export default function Payments() {
                 onClick={() => fetchPayments(page)}
                 className={`min-w-[32px] rounded-md px-2 py-1 ${
                   page === meta.current_page
-                    ? "bg-slate-900 text-white"
+                    ? "bg-brand-700 text-white"
                     : "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50"
                 }`}
               >

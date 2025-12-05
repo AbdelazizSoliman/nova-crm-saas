@@ -8,11 +8,11 @@ import SendInvoiceEmailModal from "../components/SendInvoiceEmailModal";
 import { usePermissions } from "../utils/permissions";
 
 const statusBadges = {
-  draft: "bg-slate-100 text-slate-700", // gray
-  sent: "bg-blue-100 text-blue-700",
-  paid: "bg-green-100 text-green-700",
-  overdue: "bg-red-100 text-red-700",
-  cancelled: "bg-slate-200 text-slate-700",
+  draft: "badge-soft border-brand-200 bg-brand-50 text-brand-700", // gray
+  sent: "badge-soft border-brand-300 bg-brand-100 text-brand-800",
+  paid: "badge-soft border-green-200 bg-green-50 text-green-700",
+  overdue: "badge-soft border-red-200 bg-red-50 text-red-700",
+  cancelled: "badge-soft border-brand-100 bg-white text-brand-700",
 };
 
 const statusOptions = ["draft", "sent", "paid", "overdue", "cancelled"];
@@ -576,7 +576,7 @@ export default function Invoices() {
         {canManageInvoices && (
           <button
             onClick={openCreateForm}
-            className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="inline-flex items-center justify-center rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
           >
             + New invoice
           </button>
@@ -774,7 +774,7 @@ export default function Invoices() {
                 onClick={() => fetchInvoices(page)}
                 className={`min-w-[32px] rounded-md px-2 py-1 ${
                   page === meta.current_page
-                    ? "bg-slate-900 text-white"
+                    ? "bg-brand-700 text-white"
                     : "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50"
                 }`}
               >
@@ -1211,7 +1211,7 @@ export default function Invoices() {
                 <button
                   type="submit"
                   disabled={saving || formLoading || !canManageInvoices}
-                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+                  className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
                 >
                   {saving ? "Saving..." : "Save invoice"}
                 </button>
@@ -1388,7 +1388,7 @@ export default function Invoices() {
                     {canManageInvoices && (
                       <button
                         onClick={() => setShowPaymentModal(true)}
-                        className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                        className="rounded-lg bg-brand-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600"
                       >
                         + Add Payment
                       </button>
