@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../api/client";
+import { apiRequest } from "../api/client";
 import Alert from "../components/Alert";
 import { useAuth } from "../context/AuthContext";
 
@@ -37,18 +37,7 @@ export default function Register() {
     setSubmitting(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || data.errors?.join(", ") || "Unable to register");
-        return;
-      }
-
+      const data = await apiRequest("/auth/register", { method: "POST", body: form });
       login(data.token, data.user);
       navigate("/dashboard", { replace: true });
     } catch (err) {
