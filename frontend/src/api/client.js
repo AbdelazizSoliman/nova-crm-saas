@@ -1,5 +1,3 @@
-import { useAuth } from "../context/AuthContext";
-
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
@@ -19,7 +17,13 @@ function buildHeaders(token, hasBody = true) {
 }
 
 async function handleJsonResponse(res) {
-  const data = await res.json().catch(() => ({}));
+  const clonedResponse = res.clone();
+  const data = await res
+    .json()
+    .catch(async () => {
+      const text = await clonedResponse.text().catch(() => "");
+      return text ? { error: text } : {};
+    });
   if (!res.ok) {
     const message = data.error || data.errors?.join(", ") || "Request failed";
     throw new ApiError(message, res.status);
@@ -27,27 +31,38 @@ async function handleJsonResponse(res) {
   return data;
 }
 
-export async function apiRequest(path, { method = "GET", token, body } = {}) {
+export async function apiRequest(
+  path,
+  { method = "GET", token, body, signal } = {}
+) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method,
-    headers: buildHeaders(token, true),
+    headers: buildHeaders(token, body !== undefined),
     body: body ? JSON.stringify(body) : undefined,
+    signal,
   });
 
   return handleJsonResponse(res);
 }
 
-export async function apiFormRequest(path, { method = "POST", token, body } = {}) {
+export async function apiFormRequest(
+  path,
+  { method = "POST", token, body, signal } = {}
+) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method,
     headers: buildHeaders(token, false),
     body,
+    signal,
   });
 
   return handleJsonResponse(res);
 }
 
-export async function apiRequestBlob(path, { method = "GET", token, body } = {}) {
+export async function apiRequestBlob(
+  path,
+  { method = "GET", token, body, signal } = {}
+) {
   const headers = {};
 
   if (token) {
@@ -65,6 +80,7 @@ export async function apiRequestBlob(path, { method = "GET", token, body } = {})
     method,
     headers,
     body: requestBody,
+    signal,
   });
 
   if (!res.ok) {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { ApiError, apiRequest } from "../api/client";
 import {
   BanknotesIcon,
   DocumentChartBarIcon,
@@ -21,8 +22,6 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { API_BASE_URL } from "../api/client";
-
 function StatCard({ icon: Icon, label, value, helper }) {
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-start gap-3 shadow-sm">
@@ -65,30 +64,20 @@ export default function Dashboard() {
     const fetchSummary = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
-          `${API_BASE_URL}/dashboard/summary?range=${range}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            signal: controller.signal,
-          }
-        );
-
-        if (res.status === 401) {
-          logout();
-          navigate("/login", { replace: true });
-          return;
-        }
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to load dashboard data");
-        }
+        const data = await apiRequest(`/dashboard/summary?range=${range}`, {
+          token,
+          signal: controller.signal,
+        });
 
         setSummary(data);
         setError("");
       } catch (err) {
         if (err.name === "AbortError") return;
+        if (err instanceof ApiError && err.status === 401) {
+          logout();
+          navigate("/login", { replace: true });
+          return;
+        }
         setError(err.message || "Failed to load dashboard data");
         setSummary(null);
       } finally {
