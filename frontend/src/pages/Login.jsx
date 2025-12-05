@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../api/client";
+import { ApiError, apiRequest } from "../api/client";
 import Alert from "../components/Alert";
 import { useAuth } from "../context/AuthContext";
 
@@ -24,23 +24,19 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      const data = await apiRequest("/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: payload,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Invalid credentials");
-        return;
-      }
 
       login(data.token, data.user);
       navigate("/dashboard", { replace: true });
     } catch (err) {
-      setError(err.message || "Unable to login");
+      if (err instanceof ApiError) {
+        setError(err.message || "Invalid credentials");
+      } else {
+        setError(err.message || "Unable to login");
+      }
     } finally {
       setLoading(false);
     }
