@@ -77,7 +77,7 @@ export default function Register() {
         <div className="p-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 lg:hidden">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white">N</div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-700 text-white">N</div>
               <span>Nova CRM SaaS</span>
             </div>
             <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900">
@@ -187,7 +187,7 @@ export default function Register() {
             <button
               type="submit"
               disabled={submitting}
-              className="flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow hover:bg-slate-800 disabled:opacity-60"
+              className="flex w-full items-center justify-center rounded-lg bg-brand-700 px-4 py-3 text-sm font-semibold text-white shadow hover:bg-brand-600 disabled:opacity-60"
             >
               {submitting ? "Creating workspace..." : "Create account"}
             </button>

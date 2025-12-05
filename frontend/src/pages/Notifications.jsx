@@ -129,7 +129,7 @@ export default function Notifications() {
         <button
           type="button"
           onClick={handleMarkAll}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+          className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-600"
         >
           Mark all as read
         </button>

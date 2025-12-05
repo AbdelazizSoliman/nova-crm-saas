@@ -100,24 +100,24 @@ export default function NotificationsDropdown() {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="relative rounded-full p-2 text-slate-600 hover:bg-slate-100 focus:outline-none"
+        className="relative rounded-full p-2 text-brand-800 hover:bg-brand-100 focus:outline-none focus:ring-2 focus:ring-brand-200"
       >
         <BellIcon className="h-6 w-6" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+          <span className="absolute -top-0.5 -right-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] font-semibold text-white">
             {badgeLabel}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-96 rounded-xl bg-white shadow-lg ring-1 ring-black/5">
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <p className="text-sm font-semibold text-slate-800">Notifications</p>
+        <div className="absolute right-0 mt-2 w-96 rounded-xl bg-white shadow-lg ring-1 ring-brand-100">
+          <div className="flex items-center justify-between border-b border-brand-100 px-4 py-3">
+            <p className="text-sm font-semibold text-brand-900">Notifications</p>
             <button
               type="button"
               onClick={handleMarkAll}
-              className="text-xs font-medium text-blue-600 hover:text-blue-700"
+              className="text-xs font-medium text-brand-700 hover:text-brand-800"
             >
               Mark all as read
             </button>
@@ -127,9 +127,9 @@ export default function NotificationsDropdown() {
             {loading && (
               <div className="space-y-3 p-4">
                 {Array.from({ length: 4 }).map((_, idx) => (
-                  <div key={idx} className="animate-pulse space-y-2 rounded-lg bg-slate-50 p-3">
-                    <div className="h-3 w-32 rounded bg-slate-200" />
-                    <div className="h-3 w-48 rounded bg-slate-200" />
+                  <div key={idx} className="animate-pulse space-y-2 rounded-lg bg-brand-50 p-3">
+                    <div className="h-3 w-32 rounded bg-brand-100" />
+                    <div className="h-3 w-48 rounded bg-brand-100" />
                   </div>
                 ))}
               </div>
@@ -140,33 +140,33 @@ export default function NotificationsDropdown() {
             )}
 
             {!loading && !error && notifications.length === 0 && (
-              <div className="p-6 text-center text-sm text-slate-500">No notifications yet.</div>
+              <div className="p-6 text-center text-sm text-brand-800">No notifications yet.</div>
             )}
 
             {!loading && !error && notifications.length > 0 && (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-brand-100/70">
                 {notifications.map((notification) => (
                   <li key={notification.id}>
                     <button
                       type="button"
                       onClick={() => handleItemClick(notification)}
-                      className="flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-slate-50"
+                      className="flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-brand-50"
                     >
                       <div className="pt-0.5">
                         <CheckCircleIcon
-                          className={`h-5 w-5 ${notification.read ? "text-slate-300" : "text-blue-500"}`}
+                          className={`h-5 w-5 ${notification.read ? "text-brand-200" : "text-brand-600"}`}
                         />
                       </div>
                       <div className="flex-1">
                         <p
-                          className={`text-sm font-semibold ${notification.read ? "text-slate-600" : "text-slate-900"}`}
+                          className={`text-sm font-semibold ${notification.read ? "text-brand-700" : "text-brand-900"}`}
                         >
                           {notification.title}
                         </p>
                         {notification.body && (
-                          <p className="mt-1 text-sm text-slate-600 line-clamp-2">{notification.body}</p>
+                          <p className="mt-1 text-sm text-brand-700 line-clamp-2">{notification.body}</p>
                         )}
-                        <p className="mt-1 text-xs text-slate-500">{formatTimeAgo(notification.created_at)}</p>
+                        <p className="mt-1 text-xs text-brand-600">{formatTimeAgo(notification.created_at)}</p>
                       </div>
                     </button>
                   </li>
@@ -175,10 +175,10 @@ export default function NotificationsDropdown() {
             )}
           </div>
 
-          <div className="border-t border-slate-100 px-4 py-3 text-center">
+          <div className="border-t border-brand-100 px-4 py-3 text-center">
             <Link
               to="/notifications"
-              className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+              className="text-sm font-semibold text-brand-700 hover:text-brand-800"
               onClick={() => setOpen(false)}
             >
               View all notifications

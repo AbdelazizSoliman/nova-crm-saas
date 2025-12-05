@@ -58,15 +58,15 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-xl border border-slate-200 grid grid-cols-1 lg:grid-cols-2">
-        <div className="relative hidden lg:block bg-gradient-to-br from-slate-900 to-slate-800 p-10 text-white">
+    <div className="min-h-screen bg-brand-50 flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-xl border border-brand-100 grid grid-cols-1 lg:grid-cols-2">
+        <div className="relative hidden lg:block bg-gradient-to-br from-brand-900 to-brand-700 p-10 text-white">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-xl font-bold">N</div>
           <h1 className="mt-6 text-3xl font-semibold">Nova CRM SaaS</h1>
-          <p className="mt-2 text-slate-200">
+          <p className="mt-2 text-brand-100/90">
             Secure, multi-tenant CRM, invoicing, and billing experiences with protected demo mode for showcasing the product safely.
           </p>
-          <div className="mt-8 space-y-3 text-sm text-slate-100">
+          <div className="mt-8 space-y-3 text-sm text-brand-100">
             <p>✓ Clients, products, invoices, and PDF previews</p>
             <p>✓ Subscriptions, billing, and notifications</p>
             <p>✓ Activity log to keep teams aligned</p>
@@ -75,17 +75,17 @@ export default function Login() {
 
         <div className="p-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 lg:hidden">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white">N</div>
+            <div className="flex items-center gap-2 text-lg font-semibold text-brand-900 lg:hidden">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-700 text-white">N</div>
               <span>Nova CRM SaaS</span>
             </div>
-            <Link to="/register" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+            <Link to="/register" className="text-sm font-medium text-brand-700 hover:text-brand-900">
               Create account
             </Link>
           </div>
 
-          <h2 className="mt-6 text-2xl font-semibold text-slate-900">Welcome back</h2>
-          <p className="mt-1 text-sm text-slate-600">Sign in to access your dashboard and billing workspace.</p>
+          <h2 className="mt-6 text-2xl font-semibold text-brand-900">Welcome back</h2>
+          <p className="mt-1 text-sm text-brand-700">Sign in to access your dashboard and billing workspace.</p>
 
           {error && (
             <div className="mt-4">
@@ -95,11 +95,11 @@ export default function Login() {
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label className="text-sm font-medium text-slate-700">Email</label>
+              <label className="text-sm font-medium text-brand-800">Email</label>
               <input
                 required
                 type="email"
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+                className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -107,11 +107,11 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-700">Password</label>
+              <label className="text-sm font-medium text-brand-800">Password</label>
               <input
                 required
                 type="password"
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+                className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -121,7 +121,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow hover:bg-slate-800 disabled:opacity-60"
+              className="btn-primary w-full justify-center"
             >
               {loading ? "Signing in..." : "Login"}
             </button>
@@ -131,11 +131,11 @@ export default function Login() {
             <button
               onClick={handleDemoLogin}
               type="button"
-              className="flex w-full items-center justify-center rounded-lg border border-slate-300 px-4 py-3 font-semibold text-slate-800 hover:bg-slate-50"
+              className="btn-secondary w-full justify-center"
             >
               Login as Demo User
             </button>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-brand-700">
               Demo user is read-only for sensitive settings. Use it to explore the dashboard without risk.
             </p>
           </div>

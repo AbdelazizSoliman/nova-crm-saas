@@ -289,7 +289,7 @@ export default function Team() {
             <button
               type="submit"
               disabled={inviting}
-              className="w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+              className="w-full rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-60"
             >
               {inviting ? "Sending..." : "Send invite"}
             </button>

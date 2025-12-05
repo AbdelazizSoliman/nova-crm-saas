@@ -153,15 +153,15 @@ export default function Clients() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Clients</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-xl font-semibold text-brand-900">Clients</h1>
+          <p className="text-sm text-brand-700">
             Manage your customers and their contact information.
           </p>
         </div>
         {canManageClients && (
           <button
             onClick={openCreateForm}
-            className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="btn-primary"
           >
             + New client
           </button>
@@ -176,13 +176,13 @@ export default function Clients() {
         <input
           type="text"
           placeholder="Search by name, contact or email..."
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+          className="flex-1 rounded-lg border border-brand-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
         <button
           type="submit"
-          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="btn-secondary"
         >
           Search
         </button>
@@ -192,9 +192,9 @@ export default function Clients() {
       {error && <Alert type="danger" message={error} />}
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-brand-100 bg-white shadow-sm">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
+          <thead className="table-header border-b border-brand-100">
             <tr>
               <th className="px-4 py-2">Name</th>
               <th className="px-4 py-2">Contact</th>
@@ -209,7 +209,7 @@ export default function Clients() {
               <tr>
                 <td
                   colSpan={6}
-                  className="px-4 py-6 text-center text-slate-500"
+                  className="px-4 py-6 text-center text-brand-700"
                 >
                   Loading...
                 </td>
@@ -218,7 +218,7 @@ export default function Clients() {
               <tr>
                 <td
                   colSpan={6}
-                  className="px-4 py-6 text-center text-slate-500"
+                  className="px-4 py-6 text-center text-brand-700"
                 >
                   No clients found.
                 </td>
@@ -227,24 +227,24 @@ export default function Clients() {
               clients.map((client) => (
                 <tr
                   key={client.id}
-                  className="border-t border-slate-100 hover:bg-slate-50"
+                  className="border-t border-brand-100/70 hover:bg-brand-50"
                 >
-                  <td className="px-4 py-2 font-medium text-slate-900">
+                  <td className="px-4 py-2 font-medium text-brand-900">
                     {client.name}
                   </td>
-                  <td className="px-4 py-2 text-slate-700">
+                  <td className="px-4 py-2 text-brand-800">
                     {client.contact_name}
                   </td>
-                  <td className="px-4 py-2 text-slate-700">{client.email}</td>
-                  <td className="px-4 py-2 text-slate-700">{client.phone}</td>
-                  <td className="px-4 py-2 text-slate-700 hidden lg:table-cell">
+                  <td className="px-4 py-2 text-brand-800">{client.email}</td>
+                  <td className="px-4 py-2 text-brand-800">{client.phone}</td>
+                  <td className="px-4 py-2 text-brand-800 hidden lg:table-cell">
                     {client.country}
                   </td>
                   <td className="px-4 py-2 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => navigate(`/clients/${client.id}`)}
-                        className="text-xs font-medium text-slate-700 hover:underline"
+                        className="text-xs font-medium text-brand-800 hover:underline"
                       >
                         View
                       </button>
@@ -252,19 +252,19 @@ export default function Clients() {
                         <>
                           <button
                             onClick={() => openEditForm(client)}
-                            className="text-xs font-medium text-slate-700 hover:underline"
+                            className="text-xs font-medium text-brand-800 hover:underline"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDelete(client)}
-                            className="text-xs font-medium text-red-600 hover:underline"
+                            className="text-xs font-medium text-red-600 hover:text-red-700"
                           >
                             Delete
                           </button>
                         </>
                       ) : (
-                        <span className="text-xs text-slate-500">Read only</span>
+                        <span className="text-xs text-brand-700">Read only</span>
                       )}
                     </div>
                   </td>
@@ -277,7 +277,7 @@ export default function Clients() {
 
       {/* Pagination */}
       {pages.length > 1 && (
-        <div className="flex items-center justify-between text-xs text-slate-600">
+        <div className="flex items-center justify-between text-xs text-brand-800">
           <p>
             Page {meta.current_page} of {meta.total_pages} —{" "}
             {meta.total_records} clients
@@ -288,10 +288,10 @@ export default function Clients() {
                 key={page}
                 onClick={() => fetchClients(page)}
                 className={[
-                  "min-w-[32px] rounded-md px-2 py-1",
+                  "min-w-[32px] rounded-md px-2 py-1 border",
                   page === meta.current_page
-                    ? "bg-slate-900 text-white"
-                    : "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50",
+                    ? "bg-brand-600 text-white border-brand-700"
+                    : "bg-white text-brand-800 border-brand-200 hover:bg-brand-50",
                 ].join(" ")}
               >
                 {page}
@@ -304,14 +304,14 @@ export default function Clients() {
       {/* Form drawer/modal (بسيط) */}
       {showForm && canManageClients && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl ring-1 ring-brand-100">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold text-brand-900">
                 {editingClient ? "Edit client" : "New client"}
               </h2>
               <button
                 onClick={() => setShowForm(false)}
-                className="text-sm text-slate-500 hover:text-slate-800"
+                className="text-sm text-brand-700 hover:text-brand-900"
               >
                 ✕
               </button>
@@ -320,7 +320,7 @@ export default function Clients() {
             <form onSubmit={handleFormSubmit} className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                  <label className="block text-xs font-medium text-brand-800 mb-1">
                     Name *
                   </label>
                   <input
@@ -328,26 +328,26 @@ export default function Clients() {
                     value={formData.name}
                     onChange={handleFormChange}
                     required
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+                    className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                  <label className="block text-xs font-medium text-brand-800 mb-1">
                     Contact name
                   </label>
                   <input
                     name="contact_name"
                     value={formData.contact_name}
                     onChange={handleFormChange}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+                    className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                  <label className="block text-xs font-medium text-brand-800 mb-1">
                     Email
                   </label>
                   <input
@@ -355,48 +355,48 @@ export default function Clients() {
                     name="email"
                     value={formData.email}
                     onChange={handleFormChange}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+                    className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                  <label className="block text-xs font-medium text-brand-800 mb-1">
                     Phone
                   </label>
                   <input
                     name="phone"
                     value={formData.phone}
                     onChange={handleFormChange}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+                    className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
+                <label className="block text-xs font-medium text-brand-800 mb-1">
                   Address
                 </label>
                 <input
                   name="address"
                   value={formData.address}
                   onChange={handleFormChange}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+                  className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
+                <label className="block text-xs font-medium text-brand-800 mb-1">
                   Country
                 </label>
                 <input
                   name="country"
                   value={formData.country}
                   onChange={handleFormChange}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+                  className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
+                <label className="block text-xs font-medium text-brand-800 mb-1">
                   Notes
                 </label>
                 <textarea
@@ -404,7 +404,7 @@ export default function Clients() {
                   rows={3}
                   value={formData.notes}
                   onChange={handleFormChange}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/50"
+                  className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300"
                 />
               </div>
 
@@ -412,14 +412,14 @@ export default function Clients() {
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+                  className="btn-primary"
                 >
                   {saving ? "Saving..." : "Save client"}
                 </button>

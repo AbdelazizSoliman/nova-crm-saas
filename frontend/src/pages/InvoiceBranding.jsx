@@ -220,7 +220,7 @@ export default function InvoiceBranding() {
                     <p className="text-sm font-semibold text-slate-900">{option.title}</p>
                     <p className="text-xs text-slate-600">{option.subtitle}</p>
                     {branding.invoice_template === option.key && (
-                      <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-1 text-[11px] font-medium text-white">
+                      <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-brand-700 px-2 py-1 text-[11px] font-medium text-white">
                         Selected
                       </span>
                     )}
@@ -324,7 +324,7 @@ export default function InvoiceBranding() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+                  className="inline-flex items-center justify-center rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
                 >
                   {saving ? "Saving..." : "Save branding"}
                 </button>

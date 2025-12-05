@@ -187,7 +187,7 @@ export default function ActivityLog() {
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
           >
             Apply filters
           </button>
@@ -253,7 +253,7 @@ export default function ActivityLog() {
                 onClick={() => fetchLogs(p)}
                 className={`rounded-lg px-3 py-1 text-sm font-medium ${
                   p === currentPage
-                    ? "bg-slate-900 text-white"
+                    ? "bg-brand-700 text-white"
                     : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
                 }`}
               >

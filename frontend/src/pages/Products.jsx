@@ -208,7 +208,7 @@ export default function Products() {
         {canManageProducts && (
           <button
             onClick={openCreateForm}
-            className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="inline-flex items-center justify-center rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
           >
             + New product
           </button>
@@ -345,7 +345,7 @@ export default function Products() {
             onClick={() => fetchProducts(page)}
             className={`rounded-lg px-3 py-1 text-sm ${
               page === meta.current_page
-                ? "bg-slate-900 text-white"
+                ? "bg-brand-700 text-white"
                 : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
             }`}
           >
@@ -504,7 +504,7 @@ export default function Products() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-70"
+                  className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-70"
                 >
                   {saving ? "Saving..." : "Save product"}
                 </button>
